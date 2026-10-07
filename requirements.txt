@@ -20,7 +20,7 @@ langchain-openai>=0.2.0
 openai>=1.50.0
 
 # Vector Database
-# faiss-cpu>=1.8.0
+faiss-cpu>=1.8.0
 
 # Embeddings
 tiktoken>=0.8.0
@@ -40,3 +40,5 @@ scikit-learn>=1.5.2
 sqlalchemy>=2.0.35
 sqlalchemy-redshift>=0.8.14
 psycopg2-binary>=2.9.9
+
+redis>=5.0.0

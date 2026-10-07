@@ -1,0 +1,1999 @@
+[
+    {
+        "document_type": "table",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "content": "Schema: salesforce\nTable: call_quality__c\nFully Qualified Table: salesforce.call_quality__c"
+    },
+    {
+        "document_type": "column",
+        "name": "id",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "id",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: id\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "ownerid",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "ownerid",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: ownerid\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "isdeleted",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "isdeleted",
+        "data_type": "boolean",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: isdeleted\nData Type: boolean"
+    },
+    {
+        "document_type": "column",
+        "name": "name",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "name",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: name\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "currencyisocode",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "currencyisocode",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: currencyisocode\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "createddate",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "createddate",
+        "data_type": "timestamp with time zone",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: createddate\nData Type: timestamp with time zone"
+    },
+    {
+        "document_type": "column",
+        "name": "createdbyid",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "createdbyid",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: createdbyid\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "lastmodifieddate",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "lastmodifieddate",
+        "data_type": "timestamp with time zone",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: lastmodifieddate\nData Type: timestamp with time zone"
+    },
+    {
+        "document_type": "column",
+        "name": "lastmodifiedbyid",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "lastmodifiedbyid",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: lastmodifiedbyid\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "systemmodstamp",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "systemmodstamp",
+        "data_type": "timestamp with time zone",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: systemmodstamp\nData Type: timestamp with time zone"
+    },
+    {
+        "document_type": "column",
+        "name": "lastactivitydate",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "lastactivitydate",
+        "data_type": "date",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: lastactivitydate\nData Type: date"
+    },
+    {
+        "document_type": "column",
+        "name": "lastvieweddate",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "lastvieweddate",
+        "data_type": "timestamp with time zone",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: lastvieweddate\nData Type: timestamp with time zone"
+    },
+    {
+        "document_type": "column",
+        "name": "lastreferenceddate",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "lastreferenceddate",
+        "data_type": "timestamp with time zone",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: lastreferenceddate\nData Type: timestamp with time zone"
+    },
+    {
+        "document_type": "column",
+        "name": "connectionreceivedid",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "connectionreceivedid",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: connectionreceivedid\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "connectionsentid",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "connectionsentid",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: connectionsentid\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "acknowledged_application__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "acknowledged_application__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: acknowledged_application__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "addressed_final_hesitations__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "addressed_final_hesitations__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: addressed_final_hesitations__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "agent_average_streak__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "agent_average_streak__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: agent_average_streak__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "agent_longest_streak__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "agent_longest_streak__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: agent_longest_streak__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "agent_median_streak__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "agent_median_streak__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: agent_median_streak__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "agent_negative__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "agent_negative__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: agent_negative__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "agent_neutral__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "agent_neutral__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: agent_neutral__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "agent_overtalk_ratio__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "agent_overtalk_ratio__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: agent_overtalk_ratio__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "agent_positive__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "agent_positive__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: agent_positive__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "agent_sentiment__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "agent_sentiment__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: agent_sentiment__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "agent_talk_ratio__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "agent_talk_ratio__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: agent_talk_ratio__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "agent_total_words_per_minute__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "agent_total_words_per_minute__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: agent_total_words_per_minute__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "agent_total_words__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "agent_total_words__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: agent_total_words__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "agreed_deadline_for_items__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "agreed_deadline_for_items__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: agreed_deadline_for_items__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "asked_precise_questions__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "asked_precise_questions__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: asked_precise_questions__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "assessment_url__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "assessment_url__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: assessment_url__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "overall_total_score__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "overall_total_score__c",
+        "data_type": "double precision",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: overall_total_score__c\nData Type: double precision"
+    },
+    {
+        "document_type": "column",
+        "name": "billed_seconds__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "billed_seconds__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: billed_seconds__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "brand__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "brand__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: brand__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "call_id__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "call_id__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: call_id__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "call_start_time_stamp__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "call_start_time_stamp__c",
+        "data_type": "timestamp with time zone",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: call_start_time_stamp__c\nData Type: timestamp with time zone"
+    },
+    {
+        "document_type": "column",
+        "name": "call_summary__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "call_summary__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: call_summary__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "caller_average_streak__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "caller_average_streak__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: caller_average_streak__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "caller_longest_streak__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "caller_longest_streak__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: caller_longest_streak__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "caller_median_streak__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "caller_median_streak__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: caller_median_streak__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "caller_negative__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "caller_negative__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: caller_negative__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "caller_neutral__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "caller_neutral__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: caller_neutral__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "caller_overtalk_incidents__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "caller_overtalk_incidents__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: caller_overtalk_incidents__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "caller_positive__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "caller_positive__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: caller_positive__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "caller_sentiment__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "caller_sentiment__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: caller_sentiment__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "caller_talk_ratio__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "caller_talk_ratio__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: caller_talk_ratio__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "caller_total_words_per_minute__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "caller_total_words_per_minute__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: caller_total_words_per_minute__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "caller_total_words__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "caller_total_words__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: caller_total_words__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "checked_financial_readiness__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "checked_financial_readiness__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: checked_financial_readiness__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "confirmed_student_info__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "confirmed_student_info__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: confirmed_student_info__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "ensured_document_submission__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "ensured_document_submission__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: ensured_document_submission__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "listened_and_paraphrased__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "listened_and_paraphrased__c",
+        "data_type": "double precision",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: listened_and_paraphrased__c\nData Type: double precision"
+    },
+    {
+        "document_type": "column",
+        "name": "external_id__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "external_id__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: external_id__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "follow_up_email__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "follow_up_email__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: follow_up_email__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "followed_through__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "followed_through__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: followed_through__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "greeted_and_set_agenda__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "greeted_and_set_agenda__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: greeted_and_set_agenda__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "highlighted_deadlines__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "highlighted_deadlines__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: highlighted_deadlines__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "informed_recording__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "informed_recording__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: informed_recording__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "language__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "language__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: language__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "lead__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "lead__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: lead__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "confirmed_needs__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "confirmed_needs__c",
+        "data_type": "double precision",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: confirmed_needs__c\nData Type: double precision"
+    },
+    {
+        "document_type": "column",
+        "name": "longest_streak__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "longest_streak__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: longest_streak__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "no_talk_time_percentage__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "no_talk_time_percentage__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: no_talk_time_percentage__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "no_talk_time__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "no_talk_time__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: no_talk_time__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "origin__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "origin__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: origin__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "overall_total_score_label__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "overall_total_score_label__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: overall_total_score_label__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "professional_tone__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "professional_tone__c",
+        "data_type": "double precision",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: professional_tone__c\nData Type: double precision"
+    },
+    {
+        "document_type": "column",
+        "name": "overtalk_incidents__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "overtalk_incidents__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: overtalk_incidents__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "overtalk_ratio__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "overtalk_ratio__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: overtalk_ratio__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "person_account__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "person_account__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: person_account__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "phone_number__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "phone_number__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: phone_number__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "positioned_institution__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "positioned_institution__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: positioned_institution__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "uncovered_key_details__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "uncovered_key_details__c",
+        "data_type": "double precision",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: uncovered_key_details__c\nData Type: double precision"
+    },
+    {
+        "document_type": "column",
+        "name": "provided_timelines__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "provided_timelines__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: provided_timelines__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "purpose__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "purpose__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: purpose__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "recommendations_summary__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "recommendations_summary__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: recommendations_summary__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "scheduled_next_checkin__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "scheduled_next_checkin__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: scheduled_next_checkin__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "scorecard_type__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "scorecard_type__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: scorecard_type__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "summarization__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "summarization__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: summarization__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "supplied_correct_details__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "supplied_correct_details__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: supplied_correct_details__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "thanked_and_summarized__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "thanked_and_summarized__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: thanked_and_summarized__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "topic_1__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "topic_1__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: topic_1__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "topic_2__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "topic_2__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: topic_2__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "topic_3__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "topic_3__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: topic_3__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "transcript__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "transcript__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: transcript__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "transcription_uid__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "transcription_uid__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: transcription_uid__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "turn_taking_ratio__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "turn_taking_ratio__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: turn_taking_ratio__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "user_id__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "user_id__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: user_id__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "verified_offer_letter__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "verified_offer_letter__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: verified_offer_letter__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "agent_end_sentiment__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "agent_end_sentiment__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: agent_end_sentiment__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "agent_most_ocurrence_sentiment__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "agent_most_ocurrence_sentiment__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: agent_most_ocurrence_sentiment__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "agent_negative_ratio_sentiment__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "agent_negative_ratio_sentiment__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: agent_negative_ratio_sentiment__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "agent_neutral_ratio_sentiment__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "agent_neutral_ratio_sentiment__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: agent_neutral_ratio_sentiment__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "agent_overtalk_incidents__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "agent_overtalk_incidents__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: agent_overtalk_incidents__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "agent_positive_ratio_sentiment__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "agent_positive_ratio_sentiment__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: agent_positive_ratio_sentiment__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "agent_start_sentiment__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "agent_start_sentiment__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: agent_start_sentiment__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "agent_total_negative_sentiment__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "agent_total_negative_sentiment__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: agent_total_negative_sentiment__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "agent_total_neutral_sentiment__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "agent_total_neutral_sentiment__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: agent_total_neutral_sentiment__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "agent_total_positive_sentiment__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "agent_total_positive_sentiment__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: agent_total_positive_sentiment__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "average_streak__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "average_streak__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: average_streak__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "caller_end_sentiment__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "caller_end_sentiment__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: caller_end_sentiment__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "caller_most_ocurrence_sentiment__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "caller_most_ocurrence_sentiment__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: caller_most_ocurrence_sentiment__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "caller_negative_ratio_sentiment__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "caller_negative_ratio_sentiment__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: caller_negative_ratio_sentiment__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "caller_neutral_ratio_sentiment__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "caller_neutral_ratio_sentiment__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: caller_neutral_ratio_sentiment__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "caller_positive_ratio_sentiment__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "caller_positive_ratio_sentiment__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: caller_positive_ratio_sentiment__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "caller_start_sentiment__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "caller_start_sentiment__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: caller_start_sentiment__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "caller_total_negative_sentiment__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "caller_total_negative_sentiment__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: caller_total_negative_sentiment__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "caller_total_neutral_sentiment__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "caller_total_neutral_sentiment__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: caller_total_neutral_sentiment__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "caller_total_positive_sentiment__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "caller_total_positive_sentiment__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: caller_total_positive_sentiment__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "audio_duration__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "audio_duration__c",
+        "data_type": "double precision",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: audio_duration__c\nData Type: double precision"
+    },
+    {
+        "document_type": "column",
+        "name": "established_connection__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "established_connection__c",
+        "data_type": "double precision",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: established_connection__c\nData Type: double precision"
+    },
+    {
+        "document_type": "column",
+        "name": "clearly_introduced__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "clearly_introduced__c",
+        "data_type": "double precision",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: clearly_introduced__c\nData Type: double precision"
+    },
+    {
+        "document_type": "column",
+        "name": "provided_relevant_info__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "provided_relevant_info__c",
+        "data_type": "double precision",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: provided_relevant_info__c\nData Type: double precision"
+    },
+    {
+        "document_type": "column",
+        "name": "provided_correct_info__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "provided_correct_info__c",
+        "data_type": "double precision",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: provided_correct_info__c\nData Type: double precision"
+    },
+    {
+        "document_type": "column",
+        "name": "agreed_follow_up__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "agreed_follow_up__c",
+        "data_type": "double precision",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: agreed_follow_up__c\nData Type: double precision"
+    },
+    {
+        "document_type": "column",
+        "name": "verified_baseline_criteria__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "verified_baseline_criteria__c",
+        "data_type": "double precision",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: verified_baseline_criteria__c\nData Type: double precision"
+    },
+    {
+        "document_type": "column",
+        "name": "checked_passport_validity__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "checked_passport_validity__c",
+        "data_type": "double precision",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: checked_passport_validity__c\nData Type: double precision"
+    },
+    {
+        "document_type": "column",
+        "name": "inquired_work_experience__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "inquired_work_experience__c",
+        "data_type": "double precision",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: inquired_work_experience__c\nData Type: double precision"
+    },
+    {
+        "document_type": "column",
+        "name": "requested_cv__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "requested_cv__c",
+        "data_type": "double precision",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: requested_cv__c\nData Type: double precision"
+    },
+    {
+        "document_type": "column",
+        "name": "assessed_financials__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "assessed_financials__c",
+        "data_type": "double precision",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: assessed_financials__c\nData Type: double precision"
+    },
+    {
+        "document_type": "column",
+        "name": "addressed_concerns__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "addressed_concerns__c",
+        "data_type": "double precision",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: addressed_concerns__c\nData Type: double precision"
+    },
+    {
+        "document_type": "column",
+        "name": "conveyed_deadlines__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "conveyed_deadlines__c",
+        "data_type": "double precision",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: conveyed_deadlines__c\nData Type: double precision"
+    },
+    {
+        "document_type": "column",
+        "name": "fulfilled_prior_promises__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "fulfilled_prior_promises__c",
+        "data_type": "double precision",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: fulfilled_prior_promises__c\nData Type: double precision"
+    },
+    {
+        "document_type": "column",
+        "name": "audio_duration_mins__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "audio_duration_mins__c",
+        "data_type": "double precision",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: audio_duration_mins__c\nData Type: double precision"
+    },
+    {
+        "document_type": "column",
+        "name": "ai_call_result__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "ai_call_result__c",
+        "data_type": "character varying",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: ai_call_result__c\nData Type: character varying"
+    },
+    {
+        "document_type": "column",
+        "name": "created_date_only__c",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "created_date_only__c",
+        "data_type": "date",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: created_date_only__c\nData Type: date"
+    },
+    {
+        "document_type": "column",
+        "name": "etl_date",
+        "schema_name": "salesforce",
+        "table_name": "call_quality__c",
+        "column_name": "etl_date",
+        "data_type": "timestamp with time zone",
+        "content": "Schema: salesforce\nTable: call_quality__c\nColumn: etl_date\nData Type: timestamp with time zone"
+    },
+    {
+        "document_type": "business_domain",
+        "content": "Sales/Service Contact Center Quality Assurance and Coaching"
+    },
+    {
+        "document_type": "table_purpose",
+        "content": "Per-call fact table storing AI-derived quality, sentiment, talk-time, compliance checks, and summarization analytics for agent-customer calls; links to Agent (User), Person Account/Lead, Brand, and Scorecard type for QA, coaching, and operational reporting."
+    },
+    {
+        "document_type": "entity",
+        "name": "CallQualityFact",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "CallQualityFact",
+        "content": "Business Entity: {'name': 'CallQualityFact', 'keys': ['id', 'call_id__c', 'external_id__c', 'transcription_uid__c'], 'grain': 'One record per analyzed call'}"
+    },
+    {
+        "document_type": "entity",
+        "name": "AgentUser",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "AgentUser",
+        "content": "Business Entity: {'name': 'AgentUser', 'keys': ['user_id__c', 'ownerid'], 'notes': 'Agent who handled the call; ownerid is Salesforce record owner; user_id__c likely telephony/user identifier'}"
+    },
+    {
+        "document_type": "entity",
+        "name": "Customer",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "Customer",
+        "content": "Business Entity: {'name': 'Customer', 'keys': ['person_account__c', 'lead__c', 'phone_number__c'], 'notes': 'Customer/Prospect (Person Account or Lead) associated with the call'}"
+    },
+    {
+        "document_type": "entity",
+        "name": "Brand",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "Brand",
+        "content": "Business Entity: {'name': 'Brand', 'keys': ['brand__c']}"
+    },
+    {
+        "document_type": "entity",
+        "name": "Scorecard",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "Scorecard",
+        "content": "Business Entity: {'name': 'Scorecard', 'keys': ['scorecard_type__c', 'overall_total_score_label__c']}"
+    },
+    {
+        "document_type": "entity",
+        "name": "Language",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "Language",
+        "content": "Business Entity: {'name': 'Language', 'keys': ['language__c']}"
+    },
+    {
+        "document_type": "entity",
+        "name": "Topic",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "Topic",
+        "content": "Business Entity: {'name': 'Topic', 'keys': ['topic_1__c', 'topic_2__c', 'topic_3__c']}"
+    },
+    {
+        "document_type": "dimension",
+        "name": "CallIdentifiers",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "CallIdentifiers",
+        "content": "Business Dimension: {'name': 'CallIdentifiers', 'columns': ['id', 'name', 'call_id__c', 'transcription_uid__c', 'external_id__c', 'assessment_url__c', 'ai_call_result__c']}"
+    },
+    {
+        "document_type": "dimension",
+        "name": "AgentDimension",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "AgentDimension",
+        "content": "Business Dimension: {'name': 'AgentDimension', 'columns': ['user_id__c', 'ownerid', 'brand__c', 'language__c']}"
+    },
+    {
+        "document_type": "dimension",
+        "name": "CustomerDimension",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "CustomerDimension",
+        "content": "Business Dimension: {'name': 'CustomerDimension', 'columns': ['person_account__c', 'lead__c', 'phone_number__c', 'origin__c']}"
+    },
+    {
+        "document_type": "dimension",
+        "name": "ScorecardDimension",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "ScorecardDimension",
+        "content": "Business Dimension: {'name': 'ScorecardDimension', 'columns': ['scorecard_type__c', 'overall_total_score_label__c']}"
+    },
+    {
+        "document_type": "dimension",
+        "name": "SentimentLabels",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "SentimentLabels",
+        "content": "Business Dimension: {'name': 'SentimentLabels', 'columns': ['agent_sentiment__c', 'agent_start_sentiment__c', 'agent_end_sentiment__c', 'agent_most_ocurrence_sentiment__c', 'caller_sentiment__c', 'caller_start_sentiment__c', 'caller_end_sentiment__c', 'caller_most_ocurrence_sentiment__c']}"
+    },
+    {
+        "document_type": "dimension",
+        "name": "CallTopicsPurpose",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "CallTopicsPurpose",
+        "content": "Business Dimension: {'name': 'CallTopicsPurpose', 'columns': ['purpose__c', 'topic_1__c', 'topic_2__c', 'topic_3__c', 'recommendations_summary__c', 'call_summary__c', 'summarization__c']}"
+    },
+    {
+        "document_type": "dimension",
+        "name": "ComplianceAndProcessFlags",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "ComplianceAndProcessFlags",
+        "content": "Business Dimension: {'name': 'ComplianceAndProcessFlags', 'columns': ['informed_recording__c', 'greeted_and_set_agenda__c', 'clearly_introduced__c', 'established_connection__c', 'professional_tone__c', 'follow_up_email__c', 'agreed_follow_up__c', 'scheduled_next_checkin__c', 'fulfilled_prior_promises__c']}"
+    },
+    {
+        "document_type": "measure",
+        "name": "OverallTotalScore",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "OverallTotalScore",
+        "content": "Measure: {'name': 'OverallTotalScore', 'column': 'overall_total_score__c', 'aggregation': 'avg'}"
+    },
+    {
+        "document_type": "measure",
+        "name": "AudioDurationSeconds",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "AudioDurationSeconds",
+        "content": "Measure: {'name': 'AudioDurationSeconds', 'column': 'audio_duration__c', 'aggregation': 'avg'}"
+    },
+    {
+        "document_type": "measure",
+        "name": "AudioDurationMinutes",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "AudioDurationMinutes",
+        "content": "Measure: {'name': 'AudioDurationMinutes', 'column': 'audio_duration_mins__c', 'aggregation': 'avg'}"
+    },
+    {
+        "document_type": "measure",
+        "name": "ProfessionalTone",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "ProfessionalTone",
+        "content": "Measure: {'name': 'ProfessionalTone', 'column': 'professional_tone__c', 'aggregation': 'avg'}"
+    },
+    {
+        "document_type": "measure",
+        "name": "ConfirmedNeeds",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "ConfirmedNeeds",
+        "content": "Measure: {'name': 'ConfirmedNeeds', 'column': 'confirmed_needs__c', 'aggregation': 'avg'}"
+    },
+    {
+        "document_type": "measure",
+        "name": "UncoveredKeyDetails",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "UncoveredKeyDetails",
+        "content": "Measure: {'name': 'UncoveredKeyDetails', 'column': 'uncovered_key_details__c', 'aggregation': 'avg'}"
+    },
+    {
+        "document_type": "measure",
+        "name": "ListenedAndParaphrased",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "ListenedAndParaphrased",
+        "content": "Measure: {'name': 'ListenedAndParaphrased', 'column': 'listened_and_paraphrased__c', 'aggregation': 'avg'}"
+    },
+    {
+        "document_type": "measure",
+        "name": "AgentTalkRatio",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "AgentTalkRatio",
+        "content": "Measure: {'name': 'AgentTalkRatio', 'column': 'agent_talk_ratio__c', 'aggregation': 'avg'}"
+    },
+    {
+        "document_type": "measure",
+        "name": "CallerTalkRatio",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "CallerTalkRatio",
+        "content": "Measure: {'name': 'CallerTalkRatio', 'column': 'caller_talk_ratio__c', 'aggregation': 'avg'}"
+    },
+    {
+        "document_type": "measure",
+        "name": "TurnTakingRatio",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "TurnTakingRatio",
+        "content": "Measure: {'name': 'TurnTakingRatio', 'column': 'turn_taking_ratio__c', 'aggregation': 'avg'}"
+    },
+    {
+        "document_type": "measure",
+        "name": "NoTalkTimePct",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "NoTalkTimePct",
+        "content": "Measure: {'name': 'NoTalkTimePct', 'column': 'no_talk_time_percentage__c', 'aggregation': 'avg'}"
+    },
+    {
+        "document_type": "measure",
+        "name": "NoTalkTimeSeconds",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "NoTalkTimeSeconds",
+        "content": "Measure: {'name': 'NoTalkTimeSeconds', 'column': 'no_talk_time__c', 'aggregation': 'avg'}"
+    },
+    {
+        "document_type": "measure",
+        "name": "OvertalkIncidents",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "OvertalkIncidents",
+        "content": "Measure: {'name': 'OvertalkIncidents', 'column': 'overtalk_incidents__c', 'aggregation': 'sum'}"
+    },
+    {
+        "document_type": "measure",
+        "name": "OvertalkRatio",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "OvertalkRatio",
+        "content": "Measure: {'name': 'OvertalkRatio', 'column': 'overtalk_ratio__c', 'aggregation': 'avg'}"
+    },
+    {
+        "document_type": "measure",
+        "name": "AgentOvertalkIncidents",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "AgentOvertalkIncidents",
+        "content": "Measure: {'name': 'AgentOvertalkIncidents', 'column': 'agent_overtalk_incidents__c', 'aggregation': 'sum'}"
+    },
+    {
+        "document_type": "measure",
+        "name": "CallerOvertalkIncidents",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "CallerOvertalkIncidents",
+        "content": "Measure: {'name': 'CallerOvertalkIncidents', 'column': 'caller_overtalk_incidents__c', 'aggregation': 'sum'}"
+    },
+    {
+        "document_type": "measure",
+        "name": "AgentTotalWords",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "AgentTotalWords",
+        "content": "Measure: {'name': 'AgentTotalWords', 'column': 'agent_total_words__c', 'aggregation': 'avg'}"
+    },
+    {
+        "document_type": "measure",
+        "name": "CallerTotalWords",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "CallerTotalWords",
+        "content": "Measure: {'name': 'CallerTotalWords', 'column': 'caller_total_words__c', 'aggregation': 'avg'}"
+    },
+    {
+        "document_type": "measure",
+        "name": "AgentWPM",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "AgentWPM",
+        "content": "Measure: {'name': 'AgentWPM', 'column': 'agent_total_words_per_minute__c', 'aggregation': 'avg'}"
+    },
+    {
+        "document_type": "measure",
+        "name": "CallerWPM",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "CallerWPM",
+        "content": "Measure: {'name': 'CallerWPM', 'column': 'caller_total_words_per_minute__c', 'aggregation': 'avg'}"
+    },
+    {
+        "document_type": "measure",
+        "name": "AgentSentimentNegative",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "AgentSentimentNegative",
+        "content": "Measure: {'name': 'AgentSentimentNegative', 'column': 'agent_negative__c', 'aggregation': 'avg'}"
+    },
+    {
+        "document_type": "measure",
+        "name": "AgentSentimentNeutral",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "AgentSentimentNeutral",
+        "content": "Measure: {'name': 'AgentSentimentNeutral', 'column': 'agent_neutral__c', 'aggregation': 'avg'}"
+    },
+    {
+        "document_type": "measure",
+        "name": "AgentSentimentPositive",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "AgentSentimentPositive",
+        "content": "Measure: {'name': 'AgentSentimentPositive', 'column': 'agent_positive__c', 'aggregation': 'avg'}"
+    },
+    {
+        "document_type": "measure",
+        "name": "CallerSentimentNegative",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "CallerSentimentNegative",
+        "content": "Measure: {'name': 'CallerSentimentNegative', 'column': 'caller_negative__c', 'aggregation': 'avg'}"
+    },
+    {
+        "document_type": "measure",
+        "name": "CallerSentimentNeutral",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "CallerSentimentNeutral",
+        "content": "Measure: {'name': 'CallerSentimentNeutral', 'column': 'caller_neutral__c', 'aggregation': 'avg'}"
+    },
+    {
+        "document_type": "measure",
+        "name": "CallerSentimentPositive",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "CallerSentimentPositive",
+        "content": "Measure: {'name': 'CallerSentimentPositive', 'column': 'caller_positive__c', 'aggregation': 'avg'}"
+    },
+    {
+        "document_type": "measure",
+        "name": "AgentNegRatio",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "AgentNegRatio",
+        "content": "Measure: {'name': 'AgentNegRatio', 'column': 'agent_negative_ratio_sentiment__c', 'aggregation': 'avg'}"
+    },
+    {
+        "document_type": "measure",
+        "name": "AgentPosRatio",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "AgentPosRatio",
+        "content": "Measure: {'name': 'AgentPosRatio', 'column': 'agent_positive_ratio_sentiment__c', 'aggregation': 'avg'}"
+    },
+    {
+        "document_type": "measure",
+        "name": "CallerNegRatio",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "CallerNegRatio",
+        "content": "Measure: {'name': 'CallerNegRatio', 'column': 'caller_negative_ratio_sentiment__c', 'aggregation': 'avg'}"
+    },
+    {
+        "document_type": "measure",
+        "name": "CallerPosRatio",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "CallerPosRatio",
+        "content": "Measure: {'name': 'CallerPosRatio', 'column': 'caller_positive_ratio_sentiment__c', 'aggregation': 'avg'}"
+    },
+    {
+        "document_type": "measure",
+        "name": "EstablishedConnection",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "EstablishedConnection",
+        "content": "Measure: {'name': 'EstablishedConnection', 'column': 'established_connection__c', 'aggregation': 'avg'}"
+    },
+    {
+        "document_type": "measure",
+        "name": "ClearlyIntroduced",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "ClearlyIntroduced",
+        "content": "Measure: {'name': 'ClearlyIntroduced', 'column': 'clearly_introduced__c', 'aggregation': 'avg'}"
+    },
+    {
+        "document_type": "measure",
+        "name": "ProvidedRelevantInfo",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "ProvidedRelevantInfo",
+        "content": "Measure: {'name': 'ProvidedRelevantInfo', 'column': 'provided_relevant_info__c', 'aggregation': 'avg'}"
+    },
+    {
+        "document_type": "measure",
+        "name": "ProvidedCorrectInfo",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "ProvidedCorrectInfo",
+        "content": "Measure: {'name': 'ProvidedCorrectInfo', 'column': 'provided_correct_info__c', 'aggregation': 'avg'}"
+    },
+    {
+        "document_type": "measure",
+        "name": "AgreedFollowUp",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "AgreedFollowUp",
+        "content": "Measure: {'name': 'AgreedFollowUp', 'column': 'agreed_follow_up__c', 'aggregation': 'avg'}"
+    },
+    {
+        "document_type": "measure",
+        "name": "VerifiedBaselineCriteria",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "VerifiedBaselineCriteria",
+        "content": "Measure: {'name': 'VerifiedBaselineCriteria', 'column': 'verified_baseline_criteria__c', 'aggregation': 'avg'}"
+    },
+    {
+        "document_type": "measure",
+        "name": "CheckedPassportValidity",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "CheckedPassportValidity",
+        "content": "Measure: {'name': 'CheckedPassportValidity', 'column': 'checked_passport_validity__c', 'aggregation': 'avg'}"
+    },
+    {
+        "document_type": "measure",
+        "name": "InquiredWorkExperience",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "InquiredWorkExperience",
+        "content": "Measure: {'name': 'InquiredWorkExperience', 'column': 'inquired_work_experience__c', 'aggregation': 'avg'}"
+    },
+    {
+        "document_type": "measure",
+        "name": "RequestedCV",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "RequestedCV",
+        "content": "Measure: {'name': 'RequestedCV', 'column': 'requested_cv__c', 'aggregation': 'avg'}"
+    },
+    {
+        "document_type": "measure",
+        "name": "AssessedFinancials",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "AssessedFinancials",
+        "content": "Measure: {'name': 'AssessedFinancials', 'column': 'assessed_financials__c', 'aggregation': 'avg'}"
+    },
+    {
+        "document_type": "measure",
+        "name": "AddressedConcerns",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "AddressedConcerns",
+        "content": "Measure: {'name': 'AddressedConcerns', 'column': 'addressed_concerns__c', 'aggregation': 'avg'}"
+    },
+    {
+        "document_type": "measure",
+        "name": "ConveyedDeadlines",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "ConveyedDeadlines",
+        "content": "Measure: {'name': 'ConveyedDeadlines', 'column': 'conveyed_deadlines__c', 'aggregation': 'avg'}"
+    },
+    {
+        "document_type": "measure",
+        "name": "FulfilledPriorPromises",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "FulfilledPriorPromises",
+        "content": "Measure: {'name': 'FulfilledPriorPromises', 'column': 'fulfilled_prior_promises__c', 'aggregation': 'avg'}"
+    },
+    {
+        "document_type": "kpi",
+        "name": "Average Overall QA Score",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "Average Overall QA Score",
+        "content": "KPI: {'name': 'Average Overall QA Score', 'calculation': 'avg(overall_total_score__c)'}"
+    },
+    {
+        "document_type": "kpi",
+        "name": "Calls Assessed",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "Calls Assessed",
+        "content": "KPI: {'name': 'Calls Assessed', 'calculation': 'count(id)'}"
+    },
+    {
+        "document_type": "kpi",
+        "name": "Average Call Duration (mins)",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "Average Call Duration (mins)",
+        "content": "KPI: {'name': 'Average Call Duration (mins)', 'calculation': 'avg(audio_duration_mins__c)'}"
+    },
+    {
+        "document_type": "kpi",
+        "name": "Overtalk Rate",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "Overtalk Rate",
+        "content": "KPI: {'name': 'Overtalk Rate', 'calculation': 'avg(overtalk_ratio__c)'}"
+    },
+    {
+        "document_type": "kpi",
+        "name": "Avg No-Talk Time %",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "Avg No-Talk Time %",
+        "content": "KPI: {'name': 'Avg No-Talk Time %', 'calculation': 'avg(no_talk_time_percentage__c)'}"
+    },
+    {
+        "document_type": "kpi",
+        "name": "Compliance: Informed Recording Rate",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "Compliance: Informed Recording Rate",
+        "content": "KPI: {'name': 'Compliance: Informed Recording Rate', 'calculation': 'avg(CASE WHEN informed_recording__c IS NOT NULL THEN informed_recording__c ELSE 0 END)'}"
+    },
+    {
+        "document_type": "kpi",
+        "name": "Follow-up Committed Rate",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "Follow-up Committed Rate",
+        "content": "KPI: {'name': 'Follow-up Committed Rate', 'calculation': 'avg(agreed_follow_up__c)'}"
+    },
+    {
+        "document_type": "kpi",
+        "name": "Follow-up Email Sent Rate",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "Follow-up Email Sent Rate",
+        "content": "KPI: {'name': 'Follow-up Email Sent Rate', 'calculation': 'avg(CASE WHEN follow_up_email__c IS NOT NULL THEN 1 ELSE 0 END)'}"
+    },
+    {
+        "document_type": "kpi",
+        "name": "Positive Sentiment Ratio (Agent)",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "Positive Sentiment Ratio (Agent)",
+        "content": "KPI: {'name': 'Positive Sentiment Ratio (Agent)', 'calculation': 'avg(agent_positive_ratio_sentiment__c)'}"
+    },
+    {
+        "document_type": "kpi",
+        "name": "Positive Sentiment Ratio (Caller)",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "Positive Sentiment Ratio (Caller)",
+        "content": "KPI: {'name': 'Positive Sentiment Ratio (Caller)', 'calculation': 'avg(caller_positive_ratio_sentiment__c)'}"
+    },
+    {
+        "document_type": "kpi",
+        "name": "Scorecard Mix",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "Scorecard Mix",
+        "content": "KPI: {'name': 'Scorecard Mix', 'calculation': 'distribution(scorecard_type__c)'}"
+    },
+    {
+        "document_type": "kpi",
+        "name": "Score Label Distribution",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "Score Label Distribution",
+        "content": "KPI: {'name': 'Score Label Distribution', 'calculation': 'distribution(overall_total_score_label__c)'}"
+    },
+    {
+        "document_type": "time_dimension",
+        "name": "CallStartTimestamp",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "CallStartTimestamp",
+        "content": "Time Dimension: {'name': 'CallStartTimestamp', 'column': 'call_start_time_stamp__c', 'grain': 'timestamp'}"
+    },
+    {
+        "document_type": "time_dimension",
+        "name": "RecordCreated",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "RecordCreated",
+        "content": "Time Dimension: {'name': 'RecordCreated', 'column': 'createddate', 'grain': 'timestamp'}"
+    },
+    {
+        "document_type": "time_dimension",
+        "name": "RecordCreatedDate",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "RecordCreatedDate",
+        "content": "Time Dimension: {'name': 'RecordCreatedDate', 'column': 'created_date_only__c', 'grain': 'date'}"
+    },
+    {
+        "document_type": "time_dimension",
+        "name": "RecordLastModified",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "RecordLastModified",
+        "content": "Time Dimension: {'name': 'RecordLastModified', 'column': 'lastmodifieddate', 'grain': 'timestamp'}"
+    },
+    {
+        "document_type": "time_dimension",
+        "name": "LastActivityDate",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "LastActivityDate",
+        "content": "Time Dimension: {'name': 'LastActivityDate', 'column': 'lastactivitydate', 'grain': 'date'}"
+    },
+    {
+        "document_type": "time_dimension",
+        "name": "LastViewedDate",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "LastViewedDate",
+        "content": "Time Dimension: {'name': 'LastViewedDate', 'column': 'lastvieweddate', 'grain': 'timestamp'}"
+    },
+    {
+        "document_type": "time_dimension",
+        "name": "LastReferencedDate",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "LastReferencedDate",
+        "content": "Time Dimension: {'name': 'LastReferencedDate', 'column': 'lastreferenceddate', 'grain': 'timestamp'}"
+    },
+    {
+        "document_type": "time_dimension",
+        "name": "ETLLoadedAt",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "ETLLoadedAt",
+        "content": "Time Dimension: {'name': 'ETLLoadedAt', 'column': 'etl_date', 'grain': 'timestamp'}"
+    },
+    {
+        "document_type": "customer_dimension",
+        "name": "CustomerIdentifiers",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "CustomerIdentifiers",
+        "content": "Customer Dimension: {'name': 'CustomerIdentifiers', 'columns': ['person_account__c', 'lead__c', 'phone_number__c']}"
+    },
+    {
+        "document_type": "customer_dimension",
+        "name": "CustomerContext",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "CustomerContext",
+        "content": "Customer Dimension: {'name': 'CustomerContext', 'columns': ['brand__c', 'language__c', 'origin__c']}"
+    },
+    {
+        "document_type": "risk_metric",
+        "name": "Compliance Risk: Recording Disclosure Missing",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "Compliance Risk: Recording Disclosure Missing",
+        "content": "Risk Metric: {'name': 'Compliance Risk: Recording Disclosure Missing', 'signal': 'informed_recording__c is 0/NULL'}"
+    },
+    {
+        "document_type": "risk_metric",
+        "name": "Excessive Silence",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "Excessive Silence",
+        "content": "Risk Metric: {'name': 'Excessive Silence', 'signal': 'no_talk_time_percentage__c > threshold'}"
+    },
+    {
+        "document_type": "risk_metric",
+        "name": "High Overtalk",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "High Overtalk",
+        "content": "Risk Metric: {'name': 'High Overtalk', 'signal': 'overtalk_ratio__c or overtalk_incidents__c above threshold'}"
+    },
+    {
+        "document_type": "risk_metric",
+        "name": "Negative Agent Sentiment",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "Negative Agent Sentiment",
+        "content": "Risk Metric: {'name': 'Negative Agent Sentiment', 'signal': 'agent_negative_ratio_sentiment__c high or agent_sentiment__c indicates negative'}"
+    },
+    {
+        "document_type": "risk_metric",
+        "name": "Process Gaps",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "Process Gaps",
+        "content": "Risk Metric: {'name': 'Process Gaps', 'signal': 'verified_baseline_criteria__c, provided_correct_info__c, conveyed_deadlines__c low'}"
+    },
+    {
+        "document_type": "risk_metric",
+        "name": "Follow-up Risk",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "Follow-up Risk",
+        "content": "Risk Metric: {'name': 'Follow-up Risk', 'signal': 'agreed_follow_up__c = 0 or follow_up_email__c NULL'}"
+    },
+    {
+        "document_type": "opportunity_metric",
+        "name": "Connection Quality",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "Connection Quality",
+        "content": "Opportunity Metric: {'name': 'Connection Quality', 'signal': 'established_connection__c, clearly_introduced__c high'}"
+    },
+    {
+        "document_type": "opportunity_metric",
+        "name": "Discovery Depth",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "Discovery Depth",
+        "content": "Opportunity Metric: {'name': 'Discovery Depth', 'signal': 'confirmed_needs__c, uncovered_key_details__c high'}"
+    },
+    {
+        "document_type": "opportunity_metric",
+        "name": "Professionalism",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "Professionalism",
+        "content": "Opportunity Metric: {'name': 'Professionalism', 'signal': 'professional_tone__c trending upward'}"
+    },
+    {
+        "document_type": "opportunity_metric",
+        "name": "Issue Resolution",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "Issue Resolution",
+        "content": "Opportunity Metric: {'name': 'Issue Resolution', 'signal': 'addressed_concerns__c high'}"
+    },
+    {
+        "document_type": "opportunity_metric",
+        "name": "Next-Step Commitment",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "Next-Step Commitment",
+        "content": "Opportunity Metric: {'name': 'Next-Step Commitment', 'signal': 'agreed_follow_up__c and scheduled_next_checkin__c present'}"
+    },
+    {
+        "document_type": "opportunity_metric",
+        "name": "Efficiency",
+        "schema_name": null,
+        "table_name": null,
+        "column_name": "Efficiency",
+        "content": "Opportunity Metric: {'name': 'Efficiency', 'signal': 'audio_duration_mins__c within target range with strong scores'}"
+    },
+    {
+        "document_type": "business_question",
+        "content": "What is the average overall QA score by brand, language, and scorecard type over time?"
+    },
+    {
+        "document_type": "business_question",
+        "content": "Which agents have the highest and lowest QA scores and how does sentiment mix correlate?"
+    },
+    {
+        "document_type": "business_question",
+        "content": "How do overtalk ratio and no-talk time impact overall QA score and customer sentiment?"
+    },
+    {
+        "document_type": "business_question",
+        "content": "What compliance gaps exist (e.g., recording disclosure) by team or brand?"
+    },
+    {
+        "document_type": "business_question",
+        "content": "Are follow-ups being committed and executed consistently across agents?"
+    },
+    {
+        "document_type": "business_question",
+        "content": "Which topics and purposes are associated with the highest scores?"
+    },
+    {
+        "document_type": "business_question",
+        "content": "What is the distribution of call durations and optimal duration for best outcomes?"
+    },
+    {
+        "document_type": "business_question",
+        "content": "How do agent talk ratio and turn-taking ratio vary by language and scorecard type?"
+    },
+    {
+        "document_type": "business_question",
+        "content": "Which steps in the process (verified_baseline_criteria, conveyed_deadlines) are most often missed?"
+    },
+    {
+        "document_type": "business_question",
+        "content": "How does caller sentiment start vs. end shift, and which agents drive positive shifts?"
+    },
+    {
+        "document_type": "business_question",
+        "content": "Do specific origins or channels correlate with lower quality or higher risk?"
+    },
+    {
+        "document_type": "business_question",
+        "content": "Are there seasonal/day-of-week patterns in scores and duration?"
+    },
+    {
+        "document_type": "business_question",
+        "content": "Which agents improved the most in the past month on professionalism and discovery metrics?"
+    },
+    {
+        "document_type": "business_question",
+        "content": "What proportion of calls fall into each overall score label, and is the trend improving?"
+    },
+    {
+        "document_type": "business_question",
+        "content": "How does follow_up_email__c presence correlate with sentiment and next-step commitment?"
+    },
+    {
+        "document_type": "dashboard",
+        "content": {
+            "name": "QA Scorecard Overview",
+            "tiles": [
+                "Average Overall QA Score (trend by week)",
+                "Score Distribution by Score Label",
+                "Scores by Brand/Language (heatmap)",
+                "Top/Bottom Agents by Score",
+                "Average Call Duration vs Score (scatter)"
+            ]
+        }
+    },
+    {
+        "document_type": "dashboard",
+        "content": {
+            "name": "Agent Coaching & Sentiment",
+            "tiles": [
+                "Agent Positive/Negative Sentiment Ratios",
+                "Talk Ratio and Turn-Taking by Agent",
+                "Overtalk Incidents by Agent",
+                "Discovery & Professionalism Metrics by Agent",
+                "Before/After Sentiment Shift (caller)"
+            ]
+        }
+    },
+    {
+        "document_type": "dashboard",
+        "content": {
+            "name": "Compliance & Risk Monitoring",
+            "tiles": [
+                "Recording Disclosure Rate",
+                "Baseline Criteria Verification Rate",
+                "Overtalk and No-Talk Time Alerts",
+                "Process Step Compliance (checklist completion)",
+                "Follow-up Commitment and Email Sent Rates"
+            ]
+        }
+    },
+    {
+        "document_type": "dashboard",
+        "content": {
+            "name": "Operations & Workload",
+            "tiles": [
+                "Calls Assessed (daily/weekly)",
+                "Average Duration by Scorecard Type",
+                "Topic/Purpose Mix Over Time",
+                "Language/Origin Volume and Score",
+                "ETL Freshness (etl_date)"
+            ]
+        }
+    }
+]

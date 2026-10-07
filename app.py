@@ -1,100 +1,116 @@
+# app.py
+
 import streamlit as st
 import pandas as pd
-import psycopg2
 import plotly.express as px
-import plotly.figure_factory as ff
 
-from langchain_openai import ChatOpenAI
-from prompts import (
-    AI_EDA_PROMPT,
-    CHAT_ANALYTICS_PROMPT
+from database.query_executor import QueryExecutor
+from database.schema_extractor import SchemaExtractor
+
+from agents.orchestrator import (
+    AnalyticsOrchestrator
 )
 
-# =====================================================
-# CONFIG
-# =====================================================
+# ==========================================================
+# PAGE CONFIG
+# ==========================================================
 
 st.set_page_config(
     page_title="AI Analytics Copilot",
-    layout="wide",
-    page_icon="📊"
+    page_icon="📊",
+    layout="wide"
 )
 
-# =====================================================
-# GPT CONFIG
-# =====================================================
+# ==========================================================
+# SESSION STATE
+# ==========================================================
 
-llm = ChatOpenAI(
-    api_key=st.secrets["OPENAI_API_KEY"],
-    model="gpt-4o",
-    temperature=0
-)
+if "metadata_df" not in st.session_state:
+    st.session_state.metadata_df = None
 
-# =====================================================
-# REDSHIFT
-# =====================================================
+if "sample_df" not in st.session_state:
+    st.session_state.sample_df = None
+
+if "row_count" not in st.session_state:
+    st.session_state.row_count = 0
+
+if "schema_name" not in st.session_state:
+    st.session_state.schema_name = None
+
+if "table_name" not in st.session_state:
+    st.session_state.table_name = None
+    
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+    
+if "analytics_history" not in st.session_state:
+    st.session_state.analytics_history = []
+    
+if "last_analysis" not in st.session_state:
+    st.session_state.last_analysis = None
+
+if "last_response" not in st.session_state:
+    st.session_state.last_response = None
+
+if "generated_insight" not in st.session_state:
+    st.session_state.generated_insight = None
+    
+# ==========================================================
+# CACHE
+# ==========================================================
 
 @st.cache_resource
-def create_connection():
+def get_query_executor():
+    return QueryExecutor()
 
-    conn = psycopg2.connect(
-        host=st.secrets["REDSHIFT_HOST"],
-        port=st.secrets["REDSHIFT_PORT"],
-        dbname=st.secrets["REDSHIFT_DB"],
-        user=st.secrets["REDSHIFT_USER"],
-        password=st.secrets["REDSHIFT_PASSWORD"]
+@st.cache_resource
+def get_orchestrator():
+    return AnalyticsOrchestrator()
+
+# ==========================================================
+# HELPERS
+# ==========================================================
+
+def load_table_metadata(
+    schema_name,
+    table_name
+):
+
+    query_executor = get_query_executor()
+
+    schema_extractor = SchemaExtractor(
+        query_executor
     )
 
-    return conn
-
-
-def run_query(query):
-
-    conn = create_connection()
-
-    try:
-        return pd.read_sql(query, conn)
-
-    except Exception:
-        conn.rollback()
-        raise
-
-
-# =====================================================
-# AI INSIGHTS
-# =====================================================
-
-def generate_ai_insights():
-
-    prompt = AI_EDA_PROMPT.format(
-        row_count=st.session_state.total_rows,
-        metadata=metadata.to_string(),
-        summary=df.describe(include="all").to_string()
+    metadata = schema_extractor.get_columns(
+        schema_name=schema_name,
+        table_name=table_name
     )
 
-    response = llm.invoke(prompt)
+    stats = schema_extractor.get_table_stats(
+        schema_name=schema_name,
+        table_name=table_name
+    )
 
-    return response.content
+    sample_query = f"""
+    SELECT *
+    FROM {schema_name}.{table_name}
+    LIMIT 5000
+    """
 
-# =====================================================
-# SESSION
-# =====================================================
+    sample_df = query_executor.execute(
+        sample_query
+    )
 
-if "metadata" not in st.session_state:
-    st.session_state.metadata = None
+    return (
+        metadata,
+        sample_df,
+        stats["row_count"]
+    )
 
-if "sample_data" not in st.session_state:
-    st.session_state.sample_data = None
-
-if "table" not in st.session_state:
-    st.session_state.table = None
-
-if "schema" not in st.session_state:
-    st.session_state.schema = None
-
-# =====================================================
+# ==========================================================
 # SIDEBAR
-# =====================================================
+# ==========================================================
 
 st.sidebar.title("📊 AI Analytics Copilot")
 
@@ -104,142 +120,176 @@ menu = st.sidebar.radio(
         "Data Overview",
         "EDA Dashboard",
         "Data Quality",
-        "AI Insights",
         "Chat Analytics"
     ]
 )
 
-# =====================================================
-# DATA LOAD SECTION
-# =====================================================
+st.sidebar.markdown("---")
 
-with st.sidebar:
+st.sidebar.subheader(
+    "Connect Redshift"
+)
 
-    st.markdown("---")
+schema_name = st.sidebar.text_input(
+    "Schema",
+    value="salesforce"
+)
 
-    st.subheader("Connect Redshift")
+table_name = st.sidebar.text_input("Table Name")
 
-    schema = st.text_input(
-        "Schema",
-        value="salesforce"
-    )
+if st.sidebar.button("Load Dataset"):
+    try:
 
-    table = st.text_input(
-        "Table Name"
-    )
+        with st.spinner(
+            "Loading Metadata..."
+        ):
 
-    if st.button("Load Dataset"):
-
-        try:
-
-            metadata_query = f"""
-            SELECT
-                column_name,
-                data_type
-            FROM information_schema.columns
-            WHERE table_schema='{schema}'
-            AND table_name='{table}'
-            ORDER BY ordinal_position
-            """
-
-            metadata = run_query(metadata_query)
-
-            sample_query = f"""
-            SELECT *
-            FROM {schema}.{table}
-            LIMIT 5000
-            """
-
-            sample_df = run_query(sample_query)
-
-            count_query = f"""
-            SELECT COUNT(*) total_rows
-            FROM {schema}.{table}
-            """
-
-            count_df = run_query(count_query)
-
-            st.session_state.metadata = metadata
-            st.session_state.sample_data = sample_df
-            st.session_state.total_rows = int(
-                count_df.iloc[0]["total_rows"]
+            (
+                metadata_df,
+                sample_df,
+                row_count
+            ) = load_table_metadata(
+                schema_name,
+                table_name
             )
 
-            st.session_state.schema = schema
-            st.session_state.table = table
+            st.session_state.metadata_df = (
+                metadata_df
+            )
 
-            st.success("Dataset Loaded")
+            st.session_state.sample_df = (
+                sample_df
+            )
 
-        except Exception as e:
+            st.session_state.row_count = (
+                row_count
+            )
 
-            st.error(str(e))
+            st.session_state.schema_name = (
+                schema_name
+            )
 
-# =====================================================
+            st.session_state.table_name = (
+                table_name
+            )
+
+        st.sidebar.success(
+            "Dataset Loaded"
+        )
+
+    except Exception as e:
+
+        st.sidebar.error(
+            str(e)
+        )
+
+if st.sidebar.button("Clear Chat"):
+
+    st.session_state.messages = []
+
+    st.session_state.analytics_history = []
+
+    st.session_state.last_analysis = None
+
+    st.session_state.last_response = None
+
+    st.session_state.generated_insight = None
+
+    st.rerun()
+    
+# ==========================================================
 # VALIDATION
-# =====================================================
+# ==========================================================
 
-if st.session_state.sample_data is None:
+if st.session_state.sample_df is None:
 
-    st.title("AI Analytics Copilot")
+    st.title(
+        "AI Analytics Copilot"
+    )
 
     st.info(
-        "Load Redshift table from left menu"
+        "Load a Redshift table from the left menu."
     )
 
     st.stop()
 
-df = st.session_state.sample_data
-metadata = st.session_state.metadata
+# ==========================================================
+# DATA
+# ==========================================================
 
-# =====================================================
-# PAGE 1
-# =====================================================
+metadata_df = (
+    st.session_state.metadata_df
+)
+
+df = (
+    st.session_state.sample_df
+)
+
+# ==========================================================
+# DATA OVERVIEW
+# ==========================================================
 
 if menu == "Data Overview":
 
-    st.title("📊 Data Overview")
-
-    rows = st.session_state.total_rows
-    cols = len(df.columns)
-
-    numeric_cols = len(
-        df.select_dtypes(include="number").columns
-    )
-
-    categorical_cols = len(
-        df.select_dtypes(
-            include=["object"]
-        ).columns
+    st.title(
+        "📊 Data Overview"
     )
 
     c1, c2, c3, c4 = st.columns(4)
 
-    c1.metric("Rows", f"{rows:,}")
-    c2.metric("Columns", cols)
-    c3.metric("Numeric", numeric_cols)
-    c4.metric("Categorical", categorical_cols)
+    c1.metric(
+        "Rows",
+        f"{st.session_state.row_count:,}"
+    )
+
+    c2.metric(
+        "Columns",
+        len(df.columns)
+    )
+
+    c3.metric(
+        "Numeric Columns",
+        len(
+            df.select_dtypes(
+                include="number"
+            ).columns
+        )
+    )
+
+    c4.metric(
+        "Categorical Columns",
+        len(
+            df.select_dtypes(
+                include=["object"]
+            ).columns
+        )
+    )
 
     st.markdown("### Metadata")
 
     st.dataframe(
-        metadata,
+        metadata_df,
         use_container_width=True
     )
 
-    st.markdown("### Sample Data")
+    st.markdown(
+        "### Sample Data"
+    )
 
     st.dataframe(
         df.head(100),
         use_container_width=True
     )
 
-# =====================================================
-# PAGE 2
-# =====================================================
+# ==========================================================
+# EDA
+# ==========================================================
 
 elif menu == "EDA Dashboard":
 
-    st.title("📈 EDA Dashboard")
+    st.title(
+        "📈 EDA Dashboard"
+    )
 
     numeric_df = df.select_dtypes(
         include="number"
@@ -247,22 +297,25 @@ elif menu == "EDA Dashboard":
 
     if len(numeric_df.columns) > 0:
 
-        st.subheader("Statistics")
+        st.subheader(
+            "Descriptive Statistics"
+        )
 
         st.dataframe(
             numeric_df.describe().T,
             use_container_width=True
         )
 
-        selected_column = st.selectbox(
-            "Distribution",
+        selected_col = st.selectbox(
+            "Distribution Column",
             numeric_df.columns
         )
 
         fig = px.histogram(
             df,
-            x=selected_column,
-            title=selected_column
+            x=selected_col,
+            nbins=40,
+            title=f"{selected_col} Distribution"
         )
 
         st.plotly_chart(
@@ -273,12 +326,19 @@ elif menu == "EDA Dashboard":
     dtype_count = (
         df.dtypes.astype(str)
         .value_counts()
+        .reset_index()
     )
 
+    dtype_count.columns = [
+        "Type",
+        "Count"
+    ]
+
     fig = px.pie(
-        values=dtype_count.values,
-        names=dtype_count.index,
-        title="Column Types"
+        dtype_count,
+        names="Type",
+        values="Count",
+        title="Column Data Types"
     )
 
     st.plotly_chart(
@@ -286,32 +346,40 @@ elif menu == "EDA Dashboard":
         use_container_width=True
     )
 
-# =====================================================
-# PAGE 3
-# =====================================================
+# ==========================================================
+# DATA QUALITY
+# ==========================================================
 
 elif menu == "Data Quality":
 
-    st.title("🔍 Data Quality")
+    st.title(
+        "🔍 Data Quality"
+    )
 
-    missing = df.isnull().sum()
+    missing = (
+        df.isnull()
+        .sum()
+        .sort_values(
+            ascending=False
+        )
+    )
 
     missing_df = pd.DataFrame(
         {
-            "Column": missing.index,
-            "Missing": missing.values
+            "Column":
+                missing.index,
+            "Missing":
+                missing.values
         }
     )
 
-    missing_df = missing_df.sort_values(
-        "Missing",
-        ascending=False
+    st.subheader(
+        "Missing Values"
     )
 
-    st.subheader("Missing Values")
-
     st.dataframe(
-        missing_df.head(30)
+        missing_df.head(50),
+        use_container_width=True
     )
 
     fig = px.bar(
@@ -326,87 +394,215 @@ elif menu == "Data Quality":
         use_container_width=True
     )
 
-    duplicate_count = df.duplicated().sum()
+    duplicate_rows = 0
+
+    if df is not None and hasattr(df, "duplicated"):
+        duplicate_rows = int(df.duplicated().sum())
 
     st.metric(
         "Duplicate Rows",
-        duplicate_count
+        duplicate_rows
     )
 
-# =====================================================
-# PAGE 4
-# =====================================================
-
-elif menu == "AI Insights":
-
-    st.title("🤖 AI Insights")
-
-    if st.button("Generate Insights"):
-
-        profile = f"""
-Rows: {st.session_state.total_rows}
-
-Columns:
-{list(df.columns)}
-
-Data Types:
-{metadata.to_string()}
-
-Summary:
-{df.describe(include="all").to_string()}
-"""
-
-        with st.spinner(
-            "Generating insights..."
-        ):
-
-            insights = generate_ai_insights()
-
-        st.markdown(insights)
-
-# =====================================================
-# PAGE 5
-# =====================================================
+# ==========================================================
+# CHAT ANALYTICS
+# ==========================================================
 
 elif menu == "Chat Analytics":
+    st.title("🤖 Chat Analytics")
+    st.info(
+        """
+        Ask general, metadata, or analytics questions.
 
-    st.title("💬 Chat Analytics")
+        Examples:
 
-    question = st.chat_input(
-        "Ask a business question..."
+        • Hi
+        • What can you do?
+        • What KPIs are available?
+        • Explain this dataset
+        • Top 10 agents by quality score
+        • Average QA score
+        """
     )
 
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.write(message["content"])
+
+    question = st.chat_input("Ask a question...")
+
     if question:
+        st.session_state.messages.append({"role": "user", "content": question})
 
         with st.chat_message("user"):
             st.write(question)
 
-        context = f"""
-            Dataset Columns:
-            {list(df.columns)}
+        try:
+            orchestrator = get_orchestrator()
 
-            Metadata:
-            {metadata.to_string()}
+            with st.spinner("Analyzing..."):
+                response = orchestrator.analyze_question(question)
 
-            Summary:
-            {df.describe(include='all').to_string()}
-            """
-        
-        prompt = f"""
-            {CHAT_ANALYTICS_PROMPT}
+            print("\nFULL RESPONSE")
+            print(response)
 
-            DATASET CONTEXT
+            if response.get("cache_hit"):
+                st.success("⚡ Served from Redis Cache")
 
-            {context}
+            if response.get("semantic_cache_hit"):
+                st.success("🧠 Served from Semantic Cache")
+                
+            st.session_state.last_response = response
 
-            QUESTION
+            if response.get("success") and response.get("intent") == "sql_query":
+                st.session_state.last_analysis = {
+                    "question": response.get("question"),
+                    "metadata": response.get("metadata"),
+                    "sql": response.get("sql"),
+                    "result": response.get("result"),
+                }
 
-            {question}
-            """
+                st.session_state.analytics_history.append(
+                    {
+                        "question": response.get("question"),
+                        "sql": response.get("sql"),
+                        "result": response.get("result"),
+                    }
+                )
 
-        with st.spinner("Analyzing..."):
-            response = llm.invoke(prompt)
-        with st.chat_message("assistant"):
-            st.markdown(
-                response.content
+            if not response.get("success", False):
+                error_message = response.get("error", "Unknown Error")
+
+                st.session_state.messages.append(
+                    {"role": "assistant", "content": error_message}
+                )
+
+                with st.chat_message("assistant"):
+                    st.error(error_message)
+
+            else:
+                intent = response.get("intent", "")
+
+                with st.chat_message("assistant"):
+                    if intent == "general":
+                        insight = response.get("insight") or {}
+                        answer = insight.get("answer", "No response generated.")
+
+                        st.write(answer)
+
+                        st.session_state.messages.append(
+                            {"role": "assistant", "content": answer}
+                        )
+
+                    elif intent == "metadata":
+                        insight = response.get("insight") or {}
+
+                        st.markdown("## 📊 Dataset Intelligence Report")
+
+                        answer = insight.get("answer", "")
+                        if answer:
+                            st.success(answer)
+
+                        sections = [
+                            ("📌 Executive Summary", "executive_summary", "✅"),
+                            ("💼 Business Value", "business_value", "💡"),
+                            ("📈 Important KPIs", "important_kpis", "📊"),
+                            ("🔍 Possible Analyses", "possible_analyses", "🔎"),
+                            ("📊 Recommended Dashboards", "dashboard_recommendations", "📈"),
+                            ("🚀 Recommendations", "recommendations", "⚠️"),
+                        ]
+
+                        for title, key, icon in sections:
+                            items = insight.get(key, [])
+                            if items:
+                                with st.expander(title, expanded=False):
+                                    for item in items:
+                                        st.markdown(f"{icon} {item}")
+
+                        # metadata = response.get("metadata")
+                        # if metadata:
+                        #     with st.expander("🗂️ View Retrieved Metadata"):
+                        #         st.json(metadata)
+
+                        st.session_state.messages.append(
+                            {"role": "assistant", "content": answer}
+                        )
+
+                    elif intent == "sql_query":
+                        st.caption("Intent: SQL Query")
+
+                        sql_text = response.get("sql", "")
+                        
+                        if sql_text:
+                            with st.expander("Generated SQL"):
+                                st.code(sql_text, language="sql")
+
+                        result = response.get("result")
+
+                        if result:
+                            df = pd.DataFrame(result)
+
+                            if len(df) == 1 and len(df.columns) == 1:
+                                raw_value = df.iloc[0, 0]
+
+                                try:
+                                    metric_value = round(float(raw_value), 2)
+                                except Exception:
+                                    metric_value = raw_value
+
+                                st.metric(label=df.columns[0], value=metric_value)
+
+                            with st.expander("Query Results"):
+                                st.dataframe(df, use_container_width=True)
+
+                    if response.get("insight_available", False):
+                        if st.button("Generate Insight", key=f"insight_{question}"):
+                            analysis = st.session_state.get("last_analysis")
+
+                            if not analysis:
+                                st.error("No analysis available.")
+                            else:
+                                with st.spinner("Generating Insight..."):
+                                    insight = orchestrator.generate_insight(
+                                        question=analysis["question"],
+                                        sql=analysis["sql"],
+                                        result=analysis["result"],
+                                        metadata=analysis["metadata"]["context"],
+                                        history=st.session_state.analytics_history,
+                                    )
+
+                                    st.session_state["generated_insight"] = insight
+
+                    generated_insight = st.session_state.get("generated_insight")
+
+                    if generated_insight:
+                        st.markdown("### AI Insight")
+                        st.write(
+                            generated_insight.get(
+                                "answer", "No insight generated."
+                            )
+                        )
+
+                        observations = generated_insight.get("observations", [])
+                        if observations:
+                            st.markdown("#### Key Observations")
+                            for item in observations:
+                                st.write(f"• {item}")
+
+                        recommendations = generated_insight.get(
+                            "recommendations", []
+                        )
+                        if recommendations:
+                            st.markdown("#### Recommendations")
+                            for item in recommendations:
+                                st.write(f"• {item}")
+
+        except Exception as ex:
+            error_message = f"Application Error: {str(ex)}"
+
+            st.session_state.messages.append(
+                {"role": "assistant", "content": error_message}
             )
+
+            with st.chat_message("assistant"):
+                st.error(error_message)
