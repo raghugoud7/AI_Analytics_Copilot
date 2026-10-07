@@ -529,7 +529,7 @@ elif menu == "Chat Analytics":
                         )
 
                     elif intent == "sql_query":
-                        st.caption("Intent: SQL Query")
+                        # st.caption("Intent: SQL Query")
 
                         sql_text = response.get("sql", "")
                         
