@@ -87,12 +87,12 @@ if st.button("Generate AI EDA"):
     # -------------------------
 
     categorical_cols = sample_data.select_dtypes(
-        include="object"
+        include=["object", "string", "category"]
     ).columns
 
     st.header("Categorical Analysis")
 
-    for col in categorical_cols[:10\]:
+    for col in categorical_cols[:10]:
 
         tmp = (
             sample_data[col]
@@ -110,7 +110,7 @@ if st.button("Generate AI EDA"):
 
         st.plotly_chart(
             fig,
-            use_container_width=True
+            width="stretch"
         )
 
     # -------------------------

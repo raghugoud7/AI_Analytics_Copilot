@@ -34,7 +34,7 @@ class SQLAgent:
 
         return content
 
-    def generate_sql(self, question: str, metadata: dict):
+    def generate_sql(self, question: str, metadata: dict,  brand=None):
         try:
             cache_key = f"sql:{question.strip().lower()}"
             cached_sql = self.redis.get(cache_key)
@@ -54,6 +54,7 @@ class SQLAgent:
             prompt = SQL_AGENT_PROMPT.format(
                 metadata=metadata_context,
                 question=question,
+                brand = brand
             )
 
             response = self.llm.invoke(prompt)

@@ -42,3 +42,8 @@ sqlalchemy-redshift>=0.8.14
 psycopg2-binary>=2.9.9
 
 redis>=5.0.0
+
+duckdb>=1.1.0
+polars>=1.10.0
+
+scipy>=1.14.0

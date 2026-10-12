@@ -1,7 +1,7 @@
 # agents/sql_validator_agent.py
 
 import re
-
+from config.privacy import SENSITIVE_COLUMNS
 
 class SQLValidatorAgent:
 
@@ -29,8 +29,35 @@ class SQLValidatorAgent:
                 "success": False,
                 "error": "Empty SQL query generated."
             }
-
+        
         sql = sql.strip()
+        sql_lower = sql.lower()
+
+        if re.search(
+            r"select\s+\*",
+            sql_lower
+        ):
+
+            return {
+                "success": False,
+                "error": (
+                    "SELECT * is not allowed. "
+                    "Please select explicit columns."
+                )
+            }
+            
+            
+        for column in SENSITIVE_COLUMNS:
+            pattern = rf"\b{re.escape(column.lower())}\b"
+            if re.search(pattern,sql_lower):
+
+                return {
+                    "success": False,
+                    "error": (
+                        f"Sensitive column not allowed: "
+                        f"{column}"
+                    )
+                }
 
         sql_upper = sql.upper()
 
@@ -59,9 +86,17 @@ class SQLValidatorAgent:
         # Only Allow SELECT Queries
         # ----------------------------------
 
-        if not sql_upper.startswith(
-            "SELECT"
+        if not re.match(
+            r"^\s*(SELECT|WITH)\b",
+            sql_upper,
         ):
+            return {
+                "success": False,
+                "error": (
+                    "Only SELECT queries "
+                    "and CTEs are allowed."
+                )
+            }
 
             return {
                 "success": False,
@@ -115,3 +150,40 @@ class SQLValidatorAgent:
             "success": True,
             "sql": sql
         }
+        
+
+    def apply_brand_filter(
+        self,
+        sql: str,
+        brand: str | None,
+    ) -> str:
+
+        if not brand:
+            return sql
+
+        sql_upper = sql.upper()
+
+        if "BRAND__C" in sql_upper:
+            return sql
+
+        safe_brand = brand.replace(
+            "'",
+            "''",
+        )
+
+        if "WHERE" in sql_upper:
+
+            return re.sub(
+                r"\bWHERE\b",
+                (
+                    f"WHERE brand__c = '{safe_brand}' "
+                    f"AND "
+                ),
+                sql,
+                count=1,
+                flags=re.IGNORECASE,
+            )
+
+        return sql.rstrip(";") + (
+            f"\nWHERE brand__c = '{safe_brand}'"
+        )

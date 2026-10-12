@@ -3,7 +3,7 @@ import uuid
 from langchain_community.vectorstores import FAISS
 from langchain_core.documents import Document
 
-from llm.embedding_factory import get_embeddings
+from vectorstore.embeddings import get_embeddings
 
 
 class SemanticCache:
