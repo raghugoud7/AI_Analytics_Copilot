@@ -9,12 +9,15 @@ from agents.sql_agent import SQLAgent
 from database.query_executor import QueryExecutor
 from memory.chat_memory import ChatMemory
 from memory.query_cache import QueryCache
+from agents.sql_validator_agent import SQLValidatorAgent
 
 from cache.redis_service import RedisService
 from utils.cache_utils import generate_cache_key
 from cache.semantic_cache import SemanticCache
+from metadata.metadata_filter import MetadataFilter
 
 import pandas as pd
+import time
 import traceback
 from datetime import datetime
 
@@ -34,6 +37,8 @@ class AnalyticsOrchestrator:
         self.query_cache = QueryCache()
         self.redis = RedisService()
         self.semantic_cache = SemanticCache()
+        self.sql_validator = SQLValidatorAgent()
+        self.metadata_filter = MetadataFilter()
   
     def generate_insight(
         self,
@@ -65,8 +70,7 @@ class AnalyticsOrchestrator:
         
         return insight
     
-    def analyze_question(
-        self,question: str):
+    def analyze_question(self,question: str, brand=None,):
 
         if question is None:
             return {
@@ -89,9 +93,18 @@ class AnalyticsOrchestrator:
             # ----------------------------
             # Redis Cache Check
             # ----------------------------
-            cache_key = generate_cache_key(question)
-
-            cached_response = self.redis.get(cache_key)
+            start = time.time()
+            cache_key = generate_cache_key(question, brand)
+            try:
+                cached_response = self.redis.get(cache_key)
+            except Exception as ex:
+                print(f"Redis unavailable: {ex}")
+                cached_response = None
+                
+            print(
+                f"Redis Lookup: "
+                f"{time.time() - start:.2f}s"
+                )
 
             if cached_response:
                 print("✅ REDIS CACHE HIT")
@@ -108,8 +121,14 @@ class AnalyticsOrchestrator:
                 return cached_response
 
             print("❌ REDIS CACHE MISS")
-
+            
+            semantic_start = time.time()
             semantic_response = self.semantic_cache.search(question)
+            
+            print(
+                f"✅ Semantic Search Time: "
+                f"{time.time() - semantic_start:.2f}s"
+                )
 
             if semantic_response:
                 print("✅ SEMANTIC CACHE HIT")
@@ -209,11 +228,7 @@ class AnalyticsOrchestrator:
             # RETRIEVE METADATA
             # ==================================================
 
-            metadata_result = (
-                self.metadata_agent.retrieve(
-                    question
-                )
-            )
+            metadata_result = (self.metadata_agent.retrieve(question))
 
             if not metadata_result:
 
@@ -224,6 +239,12 @@ class AnalyticsOrchestrator:
                     "error":
                     "Metadata retrieval failed."
                 }
+                
+            filtered_metadata = (
+                self.metadata_filter.apply(
+                    metadata_result
+                    )
+                )
 
             # metadata_context = (
             #     metadata_result.get(
@@ -242,7 +263,7 @@ class AnalyticsOrchestrator:
                     self.metadata_insight_agent
                     .generate_insight(
                         question=question,
-                        metadata=metadata_result
+                        metadata=filtered_metadata    #metadata_result
                     )
                 )
 
@@ -250,7 +271,7 @@ class AnalyticsOrchestrator:
                     "success": True,
                     "intent": "metadata",
                     "question": question,
-                    "metadata": metadata_result,
+                    "metadata": filtered_metadata,  #metadata_result
                     "sql": "",
                     "result": None,
                     "insight": insight
@@ -272,7 +293,8 @@ class AnalyticsOrchestrator:
                 sql_response = (
                     self.sql_agent.generate_sql(
                         question=question,
-                        metadata=metadata_result
+                        metadata=filtered_metadata,  #metadata_result
+                        brand = brand
                     )
                 )
 
@@ -291,7 +313,7 @@ class AnalyticsOrchestrator:
                         "success": False,
                         "intent": "sql_query",
                         "question": question,
-                        "metadata": metadata_result,
+                        "metadata": filtered_metadata,    #metadata_result,
                         "error": sql_response.get(
                             "error",
                             "SQL generation failed."
@@ -313,31 +335,24 @@ class AnalyticsOrchestrator:
                 # ==================================================
                 # SQL SAFETY VALIDATION
                 # ==================================================
+                validation = self.sql_validator.validate(sql_query)
 
-                dangerous_keywords = [
-                    "drop ",
-                    "delete ",
-                    "truncate ",
-                    "alter ",
-                    "update ",
-                    "grant ",
-                    "revoke "
-                ]
-
-                if any(
-                    keyword in sql_query.lower()
-                    for keyword in dangerous_keywords
-                ):
-
+                if not validation["success"]:
                     return {
                         "success": False,
                         "intent": "sql_query",
                         "question": question,
                         "sql": sql_query,
-                        "error":
-                        "Unsafe SQL detected."
+                        "error": validation["error"]
                     }
 
+                sql_query = validation["sql"]
+                
+                # ==================================================
+                # SQL SAFETY VALIDATION FOR BRAND
+                # ==================================================
+                sql_query = self.sql_validator.apply_brand_filter(sql=sql_query, brand = brand)
+                
                 # ==================================================
                 # EXECUTE QUERY
                 # ==================================================

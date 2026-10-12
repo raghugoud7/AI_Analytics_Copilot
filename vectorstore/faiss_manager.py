@@ -52,19 +52,10 @@ class FAISSManager:
             docs,
             start=1
         ):
-
-            print(
-                f"\nResult {index}"
-            )
-
+            print(f"\nResult {index}")
             print("-" * 80)
-
-            print(
-                doc.page_content
-            )
-
+            print(doc.page_content)
         print("=" * 80)
-
         return docs
 
     def retrieve(

@@ -32,21 +32,20 @@ class SchemaExtractor:
     def get_table_stats(
         self,
         schema_name: str,
-        table_name: str
+        table_name: str,
+        brand_name: str
     ):
 
-        query = f"""
+        row_count_query = f"""
         SELECT COUNT(*) AS row_count
         FROM {schema_name}.{table_name}
+        WHERE brand__c = '{brand_name}'
         """
 
-        result = self.query_executor.execute(query)
+        count_df   = self.query_executor.execute(row_count_query)
+        row_count = int(count_df.iloc[0, 0])
 
-        return {
-            "row_count": int(
-                result.iloc[0]["row_count"]
-            )
-        }
+        return row_count
 
     def extract(
         self,

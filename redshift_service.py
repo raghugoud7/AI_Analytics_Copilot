@@ -35,10 +35,24 @@ class RedshiftService:
             if conn:
                 conn.close()
 
-    def execute_query(self, query):
-
+    def execute_query(self, query: str) -> pd.DataFrame:
         with self.get_connection() as conn:
-            return pd.read_sql(query, conn)
+            cursor = conn.cursor()
+            try:
+                cursor.execute(query)
+
+                if cursor.description is None:
+                    return pd.DataFrame()
+
+                rows = cursor.fetchall()
+                columns = [col[0] for col in cursor.description]
+
+                if not rows:
+                    return pd.DataFrame(columns=columns).convert_dtypes()
+
+                return pd.DataFrame(rows, columns=columns).convert_dtypes()
+            finally:
+                cursor.close()
 
     def test_connection(self):
 

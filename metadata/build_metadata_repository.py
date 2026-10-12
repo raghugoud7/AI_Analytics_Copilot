@@ -11,6 +11,7 @@ from metadata.metadata_repository_builder import (
     MetadataRepositoryBuilder
 )
 
+from utils.privacy import remove_sensitive_columns
 
 class MetadataRepositoryPipeline:
 
@@ -53,9 +54,8 @@ class MetadataRepositoryPipeline:
             )
         )
 
-        metadata_df = metadata_info[
-            "columns"
-        ]
+        metadata_df = metadata_info["columns"]
+        metadata_df = remove_sensitive_columns(metadata_df)
 
         if metadata_df.empty:
 
@@ -64,9 +64,12 @@ class MetadataRepositoryPipeline:
                 f"{schema_name}.{table_name}"
             )
 
-        print(
-            f"Found {len(metadata_df)} columns"
+        print(f"Found {len(metadata_df)} columns")
+        
+        removed_columns = set(metadata_info["columns"]["column_name"]) - set(
+            metadata_df["column_name"]
         )
+        print(f"PII columns removed: {sorted(removed_columns)}")
 
         # ==========================================
         # STEP 2
