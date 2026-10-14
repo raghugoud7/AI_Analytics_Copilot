@@ -107,7 +107,10 @@ class SQLAgent:
                 "sql": sql,
             }
             
-            self.redis.set(cache_key, response, ttl=7200)  # Cache for 2 hours
+            try:
+                self.redis.set(cache_key, response, ttl=7200)
+            except Exception as ex:
+                print(f"Metadata Redis storage skipped: {ex}")
             return response
 
         except json.JSONDecodeError as ex:

@@ -1,171 +1,398 @@
 # app.py
 
-import streamlit as st
+import re
+import time
+import uuid
+
 import pandas as pd
 import plotly.express as px
-import time
+import streamlit as st
 
+from agents.orchestrator import AnalyticsOrchestrator
+from analytics.data_analysis_orchestrator import DataAnalysisOrchestrator
+from config.privacy import SENSITIVE_COLUMNS
 from database.query_executor import QueryExecutor
 from database.schema_extractor import SchemaExtractor
-
-from agents.orchestrator import (
-    AnalyticsOrchestrator
-)
-
-from config.privacy import SENSITIVE_COLUMNS
-from utils.privacy import remove_sensitive_columns
-from analytics.data_analysis_orchestrator import DataAnalysisOrchestrator
-
-from ui.profiling_tab import render_profiling_tab
-from ui.summary_tab import render_summary_tab
-from ui.segment_tab import render_segment_tab
-from ui.kpis_tab import render_kpis_tab
-from ui.trend_tab import render_trend_tab
+from ui.chat_visualization import build_chart
 from ui.correlation_tab import render_correlation_tab
-from ui.outliers_tab import render_outlier_tab
 from ui.drivers_tab import render_drivers_tab
+from ui.kpis_tab import render_kpis_tab
+from ui.outliers_tab import render_outlier_tab
+from ui.profiling_tab import render_profiling_tab
+from ui.segment_tab import render_segment_tab
+from ui.summary_tab import render_summary_tab
+from ui.trend_tab import render_trend_tab
+from utils.privacy import remove_sensitive_columns
+
 
 # ==========================================================
-# PAGE CONFIG
+# PAGE CONFIGURATION
 # ==========================================================
 
 st.set_page_config(
     page_title="AI Analytics Copilot",
     page_icon="📊",
-    layout="wide"
+    layout="wide",
+)
+
+# ==========================================================
+# COMPACT SIDEBAR
+# ==========================================================
+
+st.markdown(
+    """
+    <style>
+    [data-testid="stSidebar"] [data-testid="stSidebarUserContent"] {
+        padding-top: 0.75rem;
+        padding-bottom: 0.75rem;
+    }
+
+    [data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
+        gap: 0.55rem;
+    }
+
+    [data-testid="stSidebar"] h1 {
+        font-size: 1.35rem;
+        padding-top: 0;
+        padding-bottom: 0.35rem;
+    }
+
+    [data-testid="stSidebar"] h2,
+    [data-testid="stSidebar"] h3 {
+        font-size: 1.05rem;
+        padding-top: 0.25rem;
+        padding-bottom: 0.25rem;
+    }
+
+    [data-testid="stSidebar"] hr {
+        margin: 0.4rem 0;
+    }
+
+    [data-testid="stSidebar"] [data-testid="stWidgetLabel"] p {
+        margin-bottom: 0;
+        font-size: 0.9rem;
+    }
+
+    [data-testid="stSidebar"] [data-testid="stButton"] button {
+        min-height: 2.2rem;
+        padding: 0.25rem 0.65rem;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
 )
 
 # ==========================================================
 # SESSION STATE
 # ==========================================================
 
-if "metadata_df" not in st.session_state:
-    st.session_state.metadata_df = None
+DEFAULT_STATE = {
+    "metadata_df": None,
+    "sample_df": None,
+    "row_count": 0,
+    "schema_name": None,
+    "table_name": None,
+    "messages": [],
+    "analytics_history": [],
+    "last_analysis": None,
+    "last_response": None,
+    "generated_insight": None,
+    "brands": [],
+    "selected_brand": None,
+    "loaded_brand": None,
+    "brands_scope": None,
+    "dataset_version": None,
+    "analysis_result": None,
+    "analysis_version": None,
+    "chat_orchestrator": None,
+    "chat_orchestrator_scope": None,
+}
 
-if "sample_df" not in st.session_state:
-    st.session_state.sample_df = None
+for key, default in DEFAULT_STATE.items():
+    if key not in st.session_state:
+        st.session_state[key] = default
 
-if "row_count" not in st.session_state:
-    st.session_state.row_count = 0
-
-if "schema_name" not in st.session_state:
-    st.session_state.schema_name = None
-
-if "table_name" not in st.session_state:
-    st.session_state.table_name = None
-    
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-    
-if "analytics_history" not in st.session_state:
-    st.session_state.analytics_history = []
-    
-if "last_analysis" not in st.session_state:
-    st.session_state.last_analysis = None
-
-if "last_response" not in st.session_state:
-    st.session_state.last_response = None
-
-if "generated_insight" not in st.session_state:
-    st.session_state.generated_insight = None
-    
-if "brands" not in st.session_state:
-    st.session_state.brands = []
-
-if "selected_brand" not in st.session_state:
-    st.session_state.selected_brand = None
-
-if "loaded_brand" not in st.session_state:
-    st.session_state.loaded_brand = None
-
-if "brand_table" not in st.session_state:
-    st.session_state.brand_table = None
 
 # ==========================================================
-# CACHE
+# RESOURCES
 # ==========================================================
 
 @st.cache_resource
 def get_query_executor():
     return QueryExecutor()
 
-@st.cache_resource
-def get_orchestrator():
-    return AnalyticsOrchestrator()
 
 @st.cache_resource
 def get_data_analyzer():
     return DataAnalysisOrchestrator()
 
 
+def get_orchestrator():
+    """Keep chat memory isolated to this session and loaded dataset."""
+    scope = (
+        st.session_state.schema_name,
+        st.session_state.table_name,
+        st.session_state.loaded_brand,
+    )
+
+    if (
+        st.session_state.chat_orchestrator is None
+        or st.session_state.chat_orchestrator_scope != scope
+    ):
+        st.session_state.chat_orchestrator = AnalyticsOrchestrator(
+            enable_redis=False,
+        )
+        st.session_state.chat_orchestrator_scope = scope
+
+    return st.session_state.chat_orchestrator
+
+
 # ==========================================================
-# HELPERS
+# SQL HELPERS
 # ==========================================================
+
+def quote_identifier(value: str) -> str:
+    value = value.strip()
+
+    if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", value):
+        raise ValueError(f"Invalid schema or table identifier: {value!r}")
+
+    return f'"{value}"'
+
+
+def quote_column(value: str) -> str:
+    if not value or "\x00" in value:
+        raise ValueError("Invalid column name.")
+
+    return '"' + value.replace('"', '""') + '"'
+
+
+def quote_literal(value: str) -> str:
+    if not isinstance(value, str) or not value:
+        raise ValueError("Please select a valid brand.")
+
+    return "'" + value.replace("'", "''") + "'"
+
+
+def execute_dataframe(query: str) -> pd.DataFrame:
+    result = get_query_executor().execute(query)
+
+    if not isinstance(result, pd.DataFrame):
+        raise TypeError("QueryExecutor.execute() must return a DataFrame.")
+
+    return result
+
+
+# ==========================================================
+# DATASET HELPERS
+# ==========================================================
+
+def load_brands(schema_name: str, table_name: str) -> list[str]:
+    table = f"{quote_identifier(schema_name)}.{quote_identifier(table_name)}"
+
+    result = execute_dataframe(
+        f"""
+        SELECT DISTINCT brand__c AS brand
+        FROM {table}
+        WHERE brand__c IS NOT NULL
+        ORDER BY brand
+        """
+    )
+
+    if "brand" not in result.columns:
+        raise ValueError("The brand query did not return a brand column.")
+
+    return [str(value) for value in result["brand"].dropna().tolist()]
+
 
 def load_table_metadata(
-    schema_name,
-    table_name,
-    brand_name,
+    schema_name: str,
+    table_name: str,
+    brand_name: str,
 ):
+    executor = get_query_executor()
+    extractor = SchemaExtractor(executor)
 
-    query_executor = get_query_executor()
-    schema_extractor = SchemaExtractor(query_executor)
+    table = f"{quote_identifier(schema_name)}.{quote_identifier(table_name)}"
+    brand_literal = quote_literal(brand_name)
 
-    metadata = schema_extractor.get_columns(
-        schema_name=schema_name,
-        table_name=table_name
-    )
-
-    row_count = schema_extractor.get_table_stats(
+    metadata = extractor.get_columns(
         schema_name=schema_name,
         table_name=table_name,
-        brand_name=brand_name
     )
 
-    sample_query = f"""
-    SELECT *
-    FROM {schema_name}.{table_name}
-    WHERE brand__c = '{brand_name}'
-    LIMIT 5000
-    """
+    if not isinstance(metadata, pd.DataFrame) or "column_name" not in metadata.columns:
+        raise ValueError("Schema metadata must contain column_name.")
 
-    sample_df = query_executor.execute(sample_query)
+    sensitive = {str(column).casefold() for column in SENSITIVE_COLUMNS}
+
+    safe_metadata = metadata.loc[
+        ~metadata["column_name"].astype(str).str.casefold().isin(sensitive)
+    ].copy()
+
+    safe_columns = safe_metadata["column_name"].dropna().astype(str).tolist()
+
+    if not safe_columns:
+        raise ValueError("No privacy-approved columns are available.")
+
+    projection = ", ".join(quote_column(column) for column in safe_columns)
+
+    sample_df = execute_dataframe(
+        f"""
+        SELECT {projection}
+        FROM {table}
+        WHERE brand__c = {brand_literal}
+        LIMIT 15000
+        """
+    )
     sample_df = remove_sensitive_columns(sample_df)
-    
-    return (
-        metadata,
-        sample_df,
-        row_count
+
+    count_df = execute_dataframe(
+        f"""
+        SELECT COUNT(*) AS row_count
+        FROM {table}
+        WHERE brand__c = {brand_literal}
+        """
     )
 
-def load_brands(
-    schema_name,
-    table_name,
-):
-    query_executor = get_query_executor()
+    if count_df.empty or "row_count" not in count_df.columns:
+        raise ValueError("Unable to retrieve the brand-specific row count.")
 
-    query = f"""
-    SELECT DISTINCT brand__c
-    FROM {schema_name}.{table_name}
-    WHERE brand__c IS NOT NULL
-    ORDER BY brand__c
-    """
-    
-    result = query_executor.execute(query)
-    
-    if isinstance(result, pd.DataFrame):
+    row_count = int(count_df["row_count"].iloc[0])
 
-        if "brand__c" not in result.columns:
-            return []
+    return safe_metadata, sample_df, row_count
 
-        return (
-            result["brand__c"]
-            .dropna()
-            .astype(str)
-            .tolist()
+
+def clear_chat():
+    st.session_state.messages = []
+    st.session_state.analytics_history = []
+    st.session_state.last_analysis = None
+    st.session_state.last_response = None
+    st.session_state.generated_insight = None
+    st.session_state.chat_orchestrator = None
+    st.session_state.chat_orchestrator_scope = None
+
+
+def markdown_answer(value) -> str:
+    if value is None:
+        return ""
+
+    if isinstance(value, list):
+        return "\n\n".join(f"- {item}" for item in value)
+
+    return str(value)
+
+
+# ==========================================================
+# CHAT RESPONSE RENDERER
+# ==========================================================
+
+def render_chat_response(response: dict, message_id: str):
+    if not isinstance(response, dict):
+        st.error("Invalid response received.")
+        return
+
+    if not response.get("success", False):
+        st.error(response.get("error") or "Analysis failed.")
+        return
+
+    if response.get("cache_hit"):
+        st.caption("Served from exact Redis cache.")
+
+    intent = response.get("intent")
+    insight = response.get("insight") or {}
+
+    if intent == "general":
+        st.markdown(
+            markdown_answer(insight.get("answer")) or "No response generated."
+        )
+        return
+
+    if intent == "metadata":
+        st.markdown("## 📊 Dataset Intelligence Report")
+
+        answer = markdown_answer(insight.get("answer"))
+
+        if answer:
+            st.markdown("### 🧠 Key Insight")
+            st.markdown(answer)
+
+        sections = [
+            ("📌 Executive Summary", "executive_summary"),
+            ("💼 Business Value", "business_value"),
+            ("📈 Important KPIs", "important_kpis"),
+            ("🔍 Possible Analyses", "possible_analyses"),
+            ("📊 Recommended Dashboards", "dashboard_recommendations"),
+            ("🚀 Recommendations", "recommendations"),
+        ]
+
+        for title, key in sections:
+            items = insight.get(key)
+
+            if items:
+                with st.expander(title):
+                    st.markdown(markdown_answer(items))
+
+        return
+
+    if intent not in {"sql_query", "visualization"}:
+        st.warning(f"Unsupported response intent: {intent}")
+        return
+
+    sql_text = response.get("sql")
+
+    if sql_text:
+        with st.expander("Generated SQL"):
+            st.code(sql_text, language="sql")
+
+    result_df = remove_sensitive_columns(
+        pd.DataFrame(response.get("result") or [])
+    )
+
+    if result_df.empty:
+        st.info(response.get("message") or "No matching records were found.")
+        return
+
+    if intent == "visualization":
+        chart = response.get("chart")
+
+        if not isinstance(chart, dict):
+            st.error("No valid chart specification was returned.")
+        else:
+            try:
+                fig = build_chart(result_df, chart)
+                st.plotly_chart(
+                    fig,
+                    width="stretch",
+                    key=f"chat_chart_{message_id}",
+                )
+            except Exception as ex:
+                st.error(f"Unable to render visualization: {ex}")
+
+    elif result_df.shape == (1, 1):
+        value = result_df.iloc[0, 0]
+
+        if pd.isna(value):
+            display_value = "N/A"
+        else:
+            try:
+                display_value = f"{float(value):,.2f}"
+            except (TypeError, ValueError):
+                display_value = str(value)
+
+        st.metric(str(result_df.columns[0]), display_value)
+
+    with st.expander("Query Results", expanded=intent == "sql_query"):
+        st.dataframe(result_df, width="stretch", hide_index=True)
+
+        st.download_button(
+            "Download Results",
+            data=result_df.to_csv(index=False),
+            file_name="chat_analysis.csv",
+            mime="text/csv",
+            key=f"chat_download_{message_id}",
         )
 
-    return []
 
 # ==========================================================
 # SIDEBAR
@@ -175,139 +402,166 @@ st.sidebar.title("📊 AI Analytics Copilot")
 
 menu = st.sidebar.radio(
     "Navigation",
-    [
-        "Data Overview",
-        "Data Analysis",
-        "Data Quality",
-        "Chat Analytics"
-    ]
+    ["Data Overview", "Data Analysis", "Data Quality", "Chat Analytics"],
 )
 
-st.sidebar.markdown("---")
+# menu = st.sidebar.selectbox(
+#     "Navigation",
+#     ["Data Overview", "Data Analysis", "Data Quality", "Chat Analytics"],
+#     key="navigation_menu",
+# )
+
+st.sidebar.divider()
 st.sidebar.subheader("Connect Redshift")
 
-schema_name = st.sidebar.text_input("Schema", value="salesforce")
-table_name = st.sidebar.text_input("Table Name")
+schema_input = st.sidebar.text_input("Schema", value="salesforce").strip()
+table_input = st.sidebar.text_input("Table Name").strip()
+input_scope = (schema_input, table_input)
 
+# schema_col, table_col = st.sidebar.columns([1, 1.5])
+# schema_input = schema_col.text_input("Schema",value="salesforce",).strip()
+# table_input = table_col.text_input("Table",).strip()
 
-# ----------------------------------
-# Load Brands
-# ----------------------------------
+input_scope = (schema_input, table_input)
 
-if st.sidebar.button("Fetch Brands"):
-    
+# Invalidate fetched brands when the schema or table changes.
+if (
+    st.session_state.brands_scope is not None
+    and st.session_state.brands_scope != input_scope
+):
+    st.session_state.brands = []
+    st.session_state.selected_brand = None
+    st.session_state.brands_scope = None
+    st.session_state.pop("brand_selector", None)
+
+if st.sidebar.button(
+    "Fetch Brands",
+    disabled=not schema_input or not table_input,
+):
     try:
-        st.session_state.brands = load_brands(
-            schema_name,
-            table_name,
-        )
+        with st.spinner("Fetching brands..."):
+            brands = load_brands(schema_input, table_input)
 
-        st.session_state.brand_table = (table_name)
+        st.session_state.brands = brands
+        st.session_state.brands_scope = input_scope
+        st.session_state.selected_brand = None
+        st.session_state.pop("brand_selector", None)
 
-        st.sidebar.success(
-            f"Loaded {len(st.session_state.brands)} brands"
-        )
+        if brands:
+            st.sidebar.success(f"Found {len(brands)} brands.")
+        else:
+            st.sidebar.warning("No non-null brands were found.")
 
     except Exception as ex:
-
         st.session_state.brands = []
-        st.sidebar.error(
-            f"Unable to load brands: {ex}"
-        )
-    
-# ----------------------------------
-# Brand Dropdown
-# ----------------------------------
+        st.session_state.brands_scope = None
+        st.session_state.selected_brand = None
+        st.sidebar.error(f"Unable to fetch brands: {ex}")
 
-brands = st.session_state.get("brands",[],)
+brands = st.session_state.brands
 
 if brands:
-
     selected_brand = st.sidebar.selectbox(
-        "Brand",
-        brands,
+        "Select Brand",
+        options=brands,
+        index=None,
+        placeholder="Choose one brand",
+        key="brand_selector",
     )
+    st.session_state.selected_brand = selected_brand
 
-    st.session_state.selected_brand = (
-        selected_brand
-    )
+can_load = (
+    bool(st.session_state.selected_brand)
+    and st.session_state.brands_scope == input_scope
+)
 
-# ----------------------------------
-# Load Dataset
-# ----------------------------------
-
-if st.sidebar.button("Load Dataset"):
+if st.sidebar.button("Load Dataset", disabled=not can_load):
     try:
-        with st.spinner("Loading Metadata..."):
+        brand = st.session_state.selected_brand
+
+        with st.spinner("Loading brand-specific data..."):
             metadata_df, sample_df, row_count = load_table_metadata(
-                schema_name,
-                table_name,
-                st.session_state.selected_brand,
+                schema_name=schema_input,
+                table_name=table_input,
+                brand_name=brand,
             )
 
-            st.session_state.metadata_df = metadata_df
-            st.session_state.sample_df = sample_df
-            st.session_state.row_count = row_count
-            st.session_state.schema_name = schema_name
-            st.session_state.table_name = table_name
-            st.session_state.loaded_brand = (
-                st.session_state.selected_brand
-            )
+        previous_scope = (
+            st.session_state.schema_name,
+            st.session_state.table_name,
+            st.session_state.loaded_brand,
+        )
+        new_scope = (schema_input, table_input, brand)
 
-        st.sidebar.success("Dataset Loaded")
-    
-    except Exception as e:
-        st.sidebar.error(str(e))
-        
-    # if st.session_state.loaded_brand:
-    #     st.caption(
-    #         f"🏫 Brand: {st.session_state.loaded_brand}"
-    #     )
-        
+        if previous_scope != new_scope:
+            clear_chat()
+
+        st.session_state.metadata_df = metadata_df
+        st.session_state.sample_df = sample_df
+        st.session_state.row_count = row_count
+        st.session_state.schema_name = schema_input
+        st.session_state.table_name = table_input
+        st.session_state.loaded_brand = brand
+
+        # Invalidate analysis only after a successful dataset load.
+        st.session_state.dataset_version = uuid.uuid4().hex
+        st.session_state.analysis_result = None
+        st.session_state.analysis_version = None
+
+        st.sidebar.success(f"Loaded: {brand}")
+
+    except Exception as ex:
+        st.sidebar.error(f"Dataset loading failed: {ex}")
+
+if st.session_state.loaded_brand:
+    st.sidebar.caption(f"Loaded brand: {st.session_state.loaded_brand}")
+
+    selection_changed = (
+        input_scope
+        != (st.session_state.schema_name, st.session_state.table_name)
+        or (
+            st.session_state.selected_brand is not None
+            and st.session_state.selected_brand != st.session_state.loaded_brand
+        )
+    )
+
+    if selection_changed:
+        st.sidebar.warning(
+            "The selection differs from the loaded dataset. "
+            "Existing pages still use the loaded dataset."
+        )
+
 if st.sidebar.button("Clear Chat"):
-
-    st.session_state.messages = []
-    st.session_state.analytics_history = []
-    st.session_state.last_analysis = None
-    st.session_state.last_response = None
-    st.session_state.generated_insight = None
+    clear_chat()
     st.rerun()
-    
+
 
 # ==========================================================
-# VALIDATION
+# LOADED DATA VALIDATION
 # ==========================================================
-
-if st.session_state.sample_df is None:
-    st.title("AI Analytics Copilot")
-    st.info("Load a Redshift table from the left menu.")
-    st.stop()
-
-# ==========================================================
-# DATA
-# ==========================================================
-
-metadata_df = st.session_state.metadata_df
-if metadata_df is None:
-    metadata_df = pd.DataFrame()
 
 df = st.session_state.sample_df
 
-if st.session_state.selected_brand:
-    st.caption(
-        f"🏫 Brand: "
-        f"{st.session_state.selected_brand}"
-    )
-    
-if df is None:
-    df = pd.DataFrame()
+if not isinstance(df, pd.DataFrame):
+    st.title("AI Analytics Copilot")
+    st.info("Fetch brands, select one brand, and click Load Dataset.")
+    st.stop()
 
 if df.empty:
     st.title("AI Analytics Copilot")
-    st.warning(
-        "No data is currently loaded. Please load a Redshift table from the left menu."
-    )
+    st.warning("The loaded brand has no sample records.")
     st.stop()
+
+metadata_df = st.session_state.metadata_df
+
+if not isinstance(metadata_df, pd.DataFrame):
+    metadata_df = pd.DataFrame()
+
+st.caption(
+    f"Loaded scope: {st.session_state.schema_name}."
+    f"{st.session_state.table_name} | Brand: {st.session_state.loaded_brand}"
+)
+
 
 # ==========================================================
 # DATA OVERVIEW
@@ -317,75 +571,118 @@ if menu == "Data Overview":
     st.title("📊 Data Overview")
 
     c1, c2, c3, c4 = st.columns(4)
-
-    c1.metric("Rows", f"{st.session_state.row_count:,}")
-    c2.metric("Columns", len(df.columns))
+    c1.metric("Brand Rows", f"{st.session_state.row_count:,}")
+    c2.metric("Approved Columns", len(df.columns))
     c3.metric("Numeric Columns", len(df.select_dtypes(include="number").columns))
-    c4.metric(
-        "Categorical Columns",
-        len(df.select_dtypes(include=["object", "string"]).columns),
+
+    categorical_count = sum(
+        pd.api.types.is_object_dtype(dtype)
+        or pd.api.types.is_string_dtype(dtype)
+        or isinstance(dtype, pd.CategoricalDtype)
+        for dtype in df.dtypes
+    )
+    c4.metric("Categorical Columns", categorical_count)
+
+    st.caption(
+        f"Profiling and local analysis use LIMIT of {len(df):,} rows. "
+        "not a guaranteed representative sample."
     )
 
-    st.markdown("### Metadata")
-    st.dataframe(metadata_df, width="stretch")
+    st.subheader("Metadata")
+    st.dataframe(metadata_df, width="stretch", hide_index=True)
 
-    st.markdown("### Sample Data")
-    st.dataframe(df.head(100), width="stretch")
+    st.subheader("Sample Data")
+    st.dataframe(df.head(100), width="stretch", hide_index=True)
+
 
 # ==========================================================
-# EDA
+# DATA ANALYSIS
 # ==========================================================
 
 elif menu == "Data Analysis":
     st.title("📈 Data Analysis")
-    
-    analyzer = get_data_analyzer()
+    st.caption("Local statistics are based on the loaded sample.")
 
-    with st.spinner(
-        "Analyzing dataset..."
-    ):
-        analysis = analyzer.analyze(
-            df=df,
-            total_rows=st.session_state.row_count,
-        )
+    if st.button("Refresh Analysis"):
+        st.session_state.analysis_result = None
+        st.session_state.analysis_version = None
 
+    needs_analysis = (
+        st.session_state.analysis_result is None
+        or st.session_state.analysis_version != st.session_state.dataset_version
+    )
 
-        tabs = st.tabs(
-            [
-                "📋 Profiling",
-                "📌 Executive Summary",
-                "📊 KPIs",
-                "📈 Segments",
-                "📉 Trends",
-                "🔗 Correlations",
-                "🚨 Outliers",
-                "🎯 Drivers",
-            ]
-        )
-    
+    if needs_analysis:
+        try:
+            with st.spinner("Analyzing dataset..."):
+                analysis = get_data_analyzer().analyze(
+                    df=df.copy(),
+                    total_rows=st.session_state.row_count,
+                )
+
+            if not isinstance(analysis, dict):
+                raise TypeError("DataAnalysisOrchestrator must return a dictionary.")
+
+            st.session_state.analysis_result = analysis
+            st.session_state.analysis_version = st.session_state.dataset_version
+
+        except Exception as ex:
+            st.error(f"Data analysis failed: {ex}")
+            st.stop()
+
+    analysis = st.session_state.analysis_result
+
+    tabs = st.tabs(
+        [
+            "📋 Profiling",
+            "📌 Data Summary",
+            "📊 KPIs",
+            "📈 Segments",
+            "📉 Trends",
+            "🔗 Correlations",
+            "🚨 Outliers",
+            "🎯 Drivers",
+        ]
+    )
+
     with tabs[0]:
         render_profiling_tab(df)
-    
-    with tabs[1]:
-        render_summary_tab(analysis["summary"])
-        
-    with tabs[2]:
-        render_kpis_tab(analysis["kpis"])
-    
-    with tabs[3]:
-        render_segment_tab(analysis["segments"])
-    
-    with tabs[4]:
-        render_trend_tab(analysis["trends"])
 
-    with tabs[5]:
-        render_correlation_tab(analysis["correlations"])
-        
-    with tabs[6]:
-        render_outlier_tab(analysis["outliers"])
-        
+    renderers = [
+        ("summary", render_summary_tab),
+        ("kpis", render_kpis_tab),
+        ("segments", render_segment_tab),
+        ("trends", render_trend_tab),
+        ("correlations", render_correlation_tab),
+        ("outliers", render_outlier_tab),
+        # ("drivers", render_drivers_tab),
+    ]
+
+    for tab, (key, renderer) in zip(tabs[1:7], renderers):
+        with tab:
+            result = analysis.get(key)
+
+            if key == "outliers" and result is None:
+                result = analysis.get("anomalies")
+
+            if not isinstance(result, dict):
+                st.warning(f"No valid {key} analysis is available.")
+            elif not result.get("success", False):
+                st.warning(result.get("error") or f"{key.title()} analysis unavailable.")
+            elif key == "segments":
+                render_segment_tab(
+                    result,
+                    key_prefix=f"segments_{st.session_state.dataset_version}",
+                )
+            else:
+                renderer(result)
+
+    # Drivers uses the DataFrame and a user-selected target.
     with tabs[7]:
-        render_drivers_tab(analysis["drivers"])
+        render_drivers_tab(
+            df=df,
+            key_prefix=f"drivers_{st.session_state.dataset_version}",
+        )
 
 # ==========================================================
 # DATA QUALITY
@@ -393,25 +690,39 @@ elif menu == "Data Analysis":
 
 elif menu == "Data Quality":
     st.title("🔍 Data Quality")
+    st.caption("Quality metrics apply to the loaded sample and approved columns.")
 
-    missing = df.isnull().sum().sort_values(ascending=False)
-    missing_df = pd.DataFrame({"Column": missing.index, "Missing": missing.values})
+    missing_df = pd.DataFrame(
+        {
+            "Column": df.columns,
+            "Missing": df.isna().sum().to_numpy(),
+            "Missing %": df.isna().mean().mul(100).round(2).to_numpy(),
+        }
+    ).sort_values("Missing", ascending=False)
 
     st.subheader("Missing Values")
-    st.dataframe(missing_df.head(50), width="stretch")
+    st.dataframe(missing_df.head(50), width="stretch", hide_index=True)
 
-    fig = px.bar(
-        missing_df.head(20),
-        x="Column",
-        y="Missing",
-        title="Top Missing Columns",
-    )
-    st.plotly_chart(fig, width="stretch")
+    missing_plot = missing_df.loc[missing_df["Missing"] > 0].head(20)
 
-    duplicate_rows = 0
-    if df is not None and hasattr(df, "duplicated"):
+    if not missing_plot.empty:
+        fig = px.bar(
+            missing_plot,
+            x="Column",
+            y="Missing",
+            hover_data=["Missing %"],
+            title="Top Missing Columns",
+        )
+        st.plotly_chart(fig, width="stretch")
+    else:
+        st.success("No missing values were found in the loaded sample.")
+
+    try:
         duplicate_rows = int(df.duplicated().sum())
-    st.metric("Duplicate Rows", duplicate_rows)
+        st.metric("Duplicate Sample Rows", duplicate_rows)
+    except TypeError:
+        st.warning("Duplicate detection is unavailable for nested column values.")
+
 
 # ==========================================================
 # CHAT ANALYTICS
@@ -419,227 +730,84 @@ elif menu == "Data Quality":
 
 elif menu == "Chat Analytics":
     st.title("🤖 Chat Analytics")
-    
-    if st.session_state.loaded_brand:
-        st.info(
-            f"🏫 Chat Analytics Scope: "
-            f"{st.session_state.loaded_brand}"
-        )
-        
-    st.info(
-        """
-        Ask general, metadata, or analytics questions.
+    st.info(f"Chat scope: {st.session_state.loaded_brand}")
 
-        Examples:
-
-        • Hi
-        • What can you do?
-        • What KPIs are available?
-        • Explain this dataset
-        • Top 10 agents by quality score
-        • Average QA score
-        """
+    st.caption(
+        "Examples: Average QA score; Explain this dataset; "
+        "Plot monthly average QA score; "
+        "Show average QA score by language as a bar chart."
     )
 
-    MAX_MESSAGES = 20
-    messages = st.session_state.messages[-MAX_MESSAGES:]
-    
-    # for message in st.session_state.messages:
-    
-    for message in messages:
+    # Store full assistant responses so charts and tables survive reruns.
+    for message in st.session_state.messages[-20:]:
         with st.chat_message(message["role"]):
-            st.write(message["content"])
+            if message["role"] == "assistant" and "response" in message:
+                render_chat_response(message["response"], message["id"])
+            else:
+                st.markdown(markdown_answer(message.get("content")))
 
-    question = st.chat_input("Ask a question...")
+    question = st.chat_input("Ask a question about the loaded brand...")
 
     if question:
-        st.session_state.messages.append({"role": "user", "content": question})
+        user_message = {
+            "id": uuid.uuid4().hex,
+            "role": "user",
+            "content": question,
+        }
+        st.session_state.messages.append(user_message)
 
         with st.chat_message("user"):
-            st.write(question)
+            st.markdown(question)
+
+        started = time.perf_counter()
 
         try:
-            orchestrator = get_orchestrator()
-            start = time.time()
             with st.spinner("Analyzing..."):
-                response = orchestrator.analyze_question(
-                    question= question,
-                    brand=st.session_state.loaded_brand
-                    )
-
-            print(
-            f"✅ Orchestrator Time: "
-            f"{time.time() - start:.2f}s"
-            )
-            print("\nFULL RESPONSE")
-            print(response)
-
-            if response.get("cache_hit"):
-                st.success("⚡ Served from Redis Cache")
-
-            if response.get("semantic_cache_hit"):
-                st.success("🧠 Served from Semantic Cache")
-                
-            st.session_state.last_response = response
-
-            if response.get("success") and response.get("intent") == "sql_query":
-                st.session_state.last_analysis = {
-                    "question": response.get("question"),
-                    "metadata": response.get("metadata"),
-                    "sql": response.get("sql"),
-                    "result": response.get("result"),
-                }
-
-                st.session_state.analytics_history.append(
-                    {
-                        "question": response.get("question"),
-                        "sql": response.get("sql"),
-                        "result": response.get("result"),
-                    }
+                response = get_orchestrator().analyze_question(
+                    question=question,
+                    brand=st.session_state.loaded_brand,
+                    schema_name=st.session_state.schema_name,
+                    table_name=st.session_state.table_name,
                 )
 
-            if not response.get("success", False):
-                error_message = response.get("error", "Unknown Error")
-
-                st.session_state.messages.append(
-                    {"role": "assistant", "content": error_message}
-                )
-
-                with st.chat_message("assistant"):
-                    st.error(error_message)
-
-            else:
-                intent = response.get("intent", "")
-
-                with st.chat_message("assistant"):
-                    if intent == "general":
-                        insight = response.get("insight") or {}
-                        answer = insight.get("answer", "No response generated.")
-
-                        st.write(answer)
-
-                        st.session_state.messages.append(
-                            {"role": "assistant", "content": answer}
-                        )
-
-                    elif intent == "metadata":
-                        insight = response.get("insight") or {}
-                        st.markdown("## 📊 Dataset Intelligence Report")
-                        answer = insight.get("answer", "")
-                        if answer:
-                            st.markdown("### 🧠 Key Insight")
-                            if isinstance(answer, list):
-                                for item in answer:
-                                    st.markdown(
-                                        f"""
-                                        ✅ {item}
-                                        """
-                                    )
-                            else:
-                                st.success(answer)
-
-                        sections = [
-                            ("📌 Executive Summary", "executive_summary", "✅"),
-                            ("💼 Business Value", "business_value", "💡"),
-                            ("📈 Important KPIs", "important_kpis", "📊"),
-                            ("🔍 Possible Analyses", "possible_analyses", "🔎"),
-                            ("📊 Recommended Dashboards", "dashboard_recommendations", "📈"),
-                            ("🚀 Recommendations", "recommendations", "⚠️"),
-                        ]
-
-                        for title, key, icon in sections:
-                            items = insight.get(key, [])
-                            if items:
-                                with st.expander(title, expanded=False):
-                                    for item in items:
-                                        st.markdown(f"{icon} {item}")
-
-                        st.session_state.messages.append(
-                            {"role": "assistant", "content": answer}
-                        )
-
-                    elif intent == "sql_query":
-                        print("✅ SQL UI RENDER START")
-                        # st.caption("Intent: SQL Query")
-
-                        sql_text = response.get("sql", "")
-                        
-                        if sql_text:
-                            with st.expander("Generated SQL"):
-                                st.code(sql_text, language="sql")
-
-                        result = response.get("result")
-
-                        if result:
-                            df = pd.DataFrame(result)
-                            df = df.drop(columns=list(SENSITIVE_COLUMNS), errors="ignore")
-                            print(f"✅ DataFrame Shape: "f"{df.shape}")
-
-                            if len(df) == 1 and len(df.columns) == 1:
-                                raw_value = df.iloc[0, 0]
-
-                                try:
-                                    metric_value = round(float(raw_value), 2)
-                                except Exception:
-                                    metric_value = raw_value
-
-                                st.metric(label=df.columns[0], value=metric_value)
-                                
-                            print("✅ Rendering DataFrame")
-
-                            with st.expander("Query Results"):
-                                st.dataframe(df, width="stretch")
-                                
-                            print("✅ DataFrame Rendered")
-
-                    # if response.get("insight_available", False):
-                    #     if st.button("Generate Insight", key=f"insight_{question}"):
-                    #         analysis = st.session_state.get("last_analysis")
-
-                    #         if not analysis:
-                    #             st.error("No analysis available.")
-                    #         else:
-                    #             with st.spinner("Generating Insight..."):
-                    #                 insight = orchestrator.generate_insight(
-                    #                     question=analysis["question"],
-                    #                     sql=analysis["sql"],
-                    #                     result=analysis["result"],
-                    #                     metadata=analysis["metadata"]["context"],
-                    #                     history=st.session_state.analytics_history,
-                    #                 )
-
-                    #                 st.session_state["generated_insight"] = insight
-
-                    # generated_insight = st.session_state.get("generated_insight")
-
-                    # if generated_insight:
-                    #     st.markdown("### AI Insight")
-                    #     st.write(
-                    #         generated_insight.get(
-                    #             "answer", "No insight generated."
-                    #         )
-                    #     )
-
-                    #     observations = generated_insight.get("observations", [])
-                    #     if observations:
-                    #         st.markdown("#### Key Observations")
-                    #         for item in observations:
-                    #             st.write(f"• {item}")
-
-                    #     recommendations = generated_insight.get(
-                    #         "recommendations", []
-                    #     )
-                    #     if recommendations:
-                    #         st.markdown("#### Recommendations")
-                    #         for item in recommendations:
-                    #             st.write(f"• {item}")
+            if not isinstance(response, dict):
+                raise TypeError("The orchestrator must return a dictionary.")
 
         except Exception as ex:
-            error_message = f"Application Error: {str(ex)}"
+            response = {
+                "success": False,
+                "question": question,
+                "error": f"Application error: {ex}",
+            }
 
-            st.session_state.messages.append(
-                {"role": "assistant", "content": error_message}
+        print(f"Orchestrator Time: {time.perf_counter() - started:.2f}s")
+        st.session_state.last_response = response
+
+        if response.get("success") and response.get("intent") in {
+            "sql_query",
+            "visualization",
+        }:
+            st.session_state.last_analysis = {
+                "question": response.get("question"),
+                "metadata": response.get("metadata"),
+                "sql": response.get("sql"),
+                "result": response.get("result"),
+                "chart": response.get("chart"),
+            }
+
+            st.session_state.analytics_history.append(
+                st.session_state.last_analysis.copy()
+            )
+            st.session_state.analytics_history = (
+                st.session_state.analytics_history[-20:]
             )
 
-            with st.chat_message("assistant"):
-                st.error(error_message)
+        assistant_message = {
+            "id": uuid.uuid4().hex,
+            "role": "assistant",
+            "response": response,
+        }
+        st.session_state.messages.append(assistant_message)
+
+        with st.chat_message("assistant"):
+            render_chat_response(response, assistant_message["id"])

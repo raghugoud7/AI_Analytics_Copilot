@@ -44,18 +44,19 @@ class FAISSManager:
         print("=" * 80)
         print(query)
 
-        print("\n" + "=" * 80)
-        print("FAISS RESULTS")
-        print("=" * 80)
+        # print("\n" + "=" * 80)
+        # print("FAISS RESULTS")
+        # print("=" * 80)
 
-        for index, doc in enumerate(
-            docs,
-            start=1
-        ):
-            print(f"\nResult {index}")
-            print("-" * 80)
-            print(doc.page_content)
-        print("=" * 80)
+        # for index, doc in enumerate(
+        #     docs,
+        #     start=1
+        # ):
+        #     print(f"\nResult {index}")
+        #     print("-" * 80)
+        #     print(doc.page_content)
+        # print("=" * 80)
+        
         return docs
 
     def retrieve(

@@ -21,12 +21,25 @@ class CorrelationAnalyzer:
 
         for i, c1 in enumerate(cols):
             for c2 in cols[i + 1 :]:
-                pair = numeric_df[[c1, c2]].dropna()
-
-                if len(pair) < 5:
+                # Clean both columns together to preserve row alignment.
+                pair = (
+                    numeric_df[[c1, c2]]
+                    .replace([float("inf"), float("-inf")], float("nan"))
+                    .dropna()
+                )
+                # Check the actual paired rows, not only the complete columns.
+                if len(pair) < 3:
                     continue
 
-                r, p = pearsonr(pair[c1], pair[c2])
+                if pair[c1].nunique() < 2 or pair[c2].nunique() < 2:
+                    continue
+
+                r, p = pearsonr(
+                    pair[c1].to_numpy(dtype=float),
+                    pair[c2].to_numpy(dtype=float),
+                )
+                if pd.isna(r) or pd.isna(p):
+                    continue
 
                 correlations.append({
                     "column_1": c1,

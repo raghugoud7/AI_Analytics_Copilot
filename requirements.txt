@@ -47,3 +47,5 @@ duckdb>=1.1.0
 polars>=1.10.0
 
 scipy>=1.14.0
+
+sqlglot==30.22.0
