@@ -69,7 +69,31 @@ Examples:
 - Compare APAC and EMEA
 
 --------------------------------------------------
-Valid Intents: general, metadata, sql_query
+4. visualization
+Classify as "visualization" when the user explicitly asks for:
+- plot
+- chart
+- graph
+- visualize
+- line chart
+- bar chart
+- pie chart
+- scatter plot
+- histogram
+- box plot
+- heatmap
+- trend chart
+
+Examples:
+
+"Plot monthly average QA score" -> visualization
+"Show top 10 agents as a bar chart" -> visualization
+"Visualize sentiment distribution" -> visualization
+"Create a scatter plot of QA score and overtalk ratio" -> visualization
+"Show monthly QA score" -> sql_query
+"What is the monthly average QA score?" -> sql_query
+--------------------------------------------------
+Valid Intents: general, metadata, sql_query, visualization
 
 Return ONLY valid JSON.
 

@@ -64,6 +64,19 @@ Performance Related Mappings
 - lowest performing agents -> lowest overall_total_score__c
 - poor performers -> lowest overall_total_score__c
 
+NUMERIC CONVERSION RULES:
+
+- Never remove all non-digit characters to convert a numeric value.
+- Preserve decimal points, signs, and scientific notation.
+- For numeric VARCHAR columns, use:
+  TRY_CAST(NULLIF(TRIM(column_name), '') AS DOUBLE PRECISION)
+- Exclude failed conversions from numeric analysis.
+- Do not replace failed conversions with zero.
+- Do not infer seconds, minutes, percentages, or other units from a column name.
+- Parse HH:MM:SS or MM:SS only when metadata confirms that format.
+- If a column has mixed or undocumented formats, request clarification
+  instead of inventing a conversion.
+  
 ==================================================
 SQL GENERATION RULES
 ==================================================
