@@ -1,189 +1,201 @@
 # agents/sql_validator_agent.py
 
-import re
+import sqlglot
+from sqlglot import exp
+from sqlglot.optimizer.scope import traverse_scope
+
 from config.privacy import SENSITIVE_COLUMNS
 
+
 class SQLValidatorAgent:
+    BLOCKED_NODES = {
+        "alter",
+        "command",
+        "copy",
+        "create",
+        "delete",
+        "drop",
+        "execute",
+        "grant",
+        "insert",
+        "into",
+        "merge",
+        "revoke",
+        "transaction",
+        "truncate",
+        "truncatetable",
+        "update",
+        "use",
+    }
 
-    BLOCKED_KEYWORDS = [
-        "DROP",
-        "DELETE",
-        "UPDATE",
-        "INSERT",
-        "ALTER",
-        "TRUNCATE",
-        "CREATE",
-        "GRANT",
-        "REVOKE",
-        "MERGE"
-    ]
+    PLACEHOLDER_TABLES = {
+        "your_table_name",
+        "table_name_here",
+        "sample_table",
+        "example_table",
+    }
 
-    def validate(
-        self,
-        sql: str
-    ) -> dict:
+    @staticmethod
+    def _parse(sql: str):
+        if not isinstance(sql, str) or not sql.strip():
+            raise ValueError("Empty SQL query generated.")
 
-        if not sql:
-
-            return {
-                "success": False,
-                "error": "Empty SQL query generated."
-            }
-        
-        sql = sql.strip()
-        sql_lower = sql.lower()
-
-        if re.search(
-            r"select\s+\*",
-            sql_lower
-        ):
-
-            return {
-                "success": False,
-                "error": (
-                    "SELECT * is not allowed. "
-                    "Please select explicit columns."
-                )
-            }
-            
-            
-        for column in SENSITIVE_COLUMNS:
-            pattern = rf"\b{re.escape(column.lower())}\b"
-            if re.search(pattern,sql_lower):
-
-                return {
-                    "success": False,
-                    "error": (
-                        f"Sensitive column not allowed: "
-                        f"{column}"
-                    )
-                }
-
-        sql_upper = sql.upper()
-
-        # ----------------------------------
-        # Block Dangerous Statements
-        # ----------------------------------
-
-        for keyword in self.BLOCKED_KEYWORDS:
-
-            pattern = rf"\b{keyword}\b"
-
-            if re.search(
-                pattern,
-                sql_upper
-            ):
-
-                return {
-                    "success": False,
-                    "error": (
-                        f"Blocked SQL operation detected: "
-                        f"{keyword}"
-                    )
-                }
-
-        # ----------------------------------
-        # Only Allow SELECT Queries
-        # ----------------------------------
-
-        if not re.match(
-            r"^\s*(SELECT|WITH)\b",
-            sql_upper,
-        ):
-            return {
-                "success": False,
-                "error": (
-                    "Only SELECT queries "
-                    "and CTEs are allowed."
-                )
-            }
-
-            return {
-                "success": False,
-                "error": (
-                    "Only SELECT queries are allowed."
-                )
-            }
-
-        # ----------------------------------
-        # Placeholder Tables
-        # ----------------------------------
-
-        placeholders = [
-            "YOUR_TABLE_NAME",
-            "TABLE_NAME_HERE",
-            "SAMPLE_TABLE",
-            "EXAMPLE_TABLE"
+        statements = [
+            statement
+            for statement in sqlglot.parse(sql, read="redshift")
+            if statement is not None
         ]
 
-        for placeholder in placeholders:
+        if len(statements) != 1:
+            raise ValueError("Exactly one SQL statement is allowed.")
 
-            if placeholder in sql_upper:
+        return statements[0]
 
-                return {
-                    "success": False,
-                    "error": (
-                        "SQL contains placeholder "
-                        "table names."
-                    )
-                }
+    def _check_tree(self, tree):
+        if not isinstance(tree, (exp.Select, exp.Union, exp.Intersect, exp.Except)):
+            raise ValueError("Only read-only SELECT queries and CTEs are allowed.")
 
-        # ----------------------------------
-        # Multiple Statements
-        # ----------------------------------
+        sensitive = {str(column).casefold() for column in SENSITIVE_COLUMNS}
 
-        if sql.count(";") > 1:
+        for node in tree.walk():
+            if node.key.lower() in self.BLOCKED_NODES:
+                raise ValueError(f"Blocked SQL operation: {node.key.upper()}")
+
+        if tree.find(exp.Join) is not None:
+            raise ValueError(
+                "Joins are not enabled. Use the loaded table or an approved "
+                "database view until join-scoping rules are configured."
+            )
+
+        for with_clause in tree.find_all(exp.With):
+            if with_clause.args.get("recursive"):
+                raise ValueError("Recursive CTEs are not allowed.")
+
+        for column in tree.find_all(exp.Column):
+            if column.name.casefold() in sensitive:
+                raise ValueError(f"Sensitive column not allowed: {column.name}")
+
+        for star in tree.find_all(exp.Star):
+            # COUNT(*) is allowed; SELECT * and alias.* are not.
+            if not isinstance(star.parent, exp.Count):
+                raise ValueError("Wildcard selection is not allowed. Use explicit columns.")
+
+        for table in tree.find_all(exp.Table):
+            if not isinstance(table.this, exp.Identifier):
+                raise ValueError("Table-valued functions are not allowed.")
+
+            if table.name.casefold() in self.PLACEHOLDER_TABLES:
+                raise ValueError("SQL contains a placeholder table name.")
+
+        for select in tree.find_all(exp.Select):
+            if select.args.get("into"):
+                raise ValueError("SELECT INTO is not allowed.")
+
+            if select.args.get("locks"):
+                raise ValueError("Locking SELECT queries are not allowed.")
+
+    def validate(self, sql: str) -> dict:
+        try:
+            tree = self._parse(sql)
+            self._check_tree(tree)
 
             return {
-                "success": False,
-                "error": (
-                    "Multiple SQL statements "
-                    "are not allowed."
-                )
+                "success": True,
+                "sql": tree.sql(dialect="redshift"),
             }
 
-        # ----------------------------------
-        # Success
-        # ----------------------------------
-
-        return {
-            "success": True,
-            "sql": sql
-        }
-        
+        except Exception as ex:
+            return {
+                "success": False,
+                "error": str(ex),
+            }
 
     def apply_brand_filter(
         self,
         sql: str,
         brand: str | None,
+        schema_name: str | None = None,
+        table_name: str | None = None,
     ) -> str:
+        if not isinstance(brand, str) or not brand.strip():
+            raise ValueError("A loaded brand is required.")
 
-        if not brand:
-            return sql
+        if not schema_name or not table_name:
+            raise ValueError("A loaded schema and table are required for SQL scoping.")
 
-        sql_upper = sql.upper()
+        tree = self._parse(sql)
+        self._check_tree(tree)
 
-        if "BRAND__C" in sql_upper:
-            return sql
+        expected_schema = schema_name.casefold()
+        expected_table = table_name.casefold()
+        physical_sources = 0
 
-        safe_brand = brand.replace(
-            "'",
-            "''",
-        )
+        scopes = list(traverse_scope(tree))
 
-        if "WHERE" in sql_upper:
+        if not scopes:
+            raise ValueError("Unable to resolve SQL query scopes.")
 
-            return re.sub(
-                r"\bWHERE\b",
-                (
-                    f"WHERE brand__c = '{safe_brand}' "
-                    f"AND "
-                ),
-                sql,
-                count=1,
-                flags=re.IGNORECASE,
-            )
+        for scope in scopes:
+            physical_tables = [
+                source
+                for _, source in scope.selected_sources.values()
+                if isinstance(source, exp.Table)
+            ]
 
-        return sql.rstrip(";") + (
-            f"\nWHERE brand__c = '{safe_brand}'"
-        )
+            if not physical_tables:
+                continue
+
+            if not isinstance(scope.expression, exp.Select):
+                raise ValueError("Unsupported physical-table query scope.")
+
+            for source in physical_tables:
+                if source.catalog:
+                    raise ValueError("Cross-database queries are not allowed.")
+
+                if source.name.casefold() != expected_table:
+                    raise ValueError(
+                        f"Only the loaded table is allowed: {schema_name}.{table_name}"
+                    )
+
+                if source.db and source.db.casefold() != expected_schema:
+                    raise ValueError(
+                        f"Only the loaded schema is allowed: {schema_name}"
+                    )
+
+                # Explicitly qualify unqualified physical table references.
+                if not source.db:
+                    source.set(
+                        "db",
+                        exp.Identifier(this=schema_name, quoted=True),
+                    )
+
+                qualifier = source.alias or source.name
+
+                predicate = exp.EQ(
+                    this=exp.Column(
+                        this=exp.Identifier(this="brand__c", quoted=True),
+                        table=exp.Identifier(this=qualifier, quoted=True),
+                    ),
+                    expression=exp.Literal.string(brand),
+                )
+
+                # Append with AND, preserving existing predicate grouping.
+                # Never skip enforcement merely because brand__c is mentioned.
+                scope.expression.where(
+                    predicate,
+                    append=True,
+                    copy=False,
+                )
+
+                physical_sources += 1
+
+        if physical_sources == 0:
+            raise ValueError("The query must read from the loaded physical table.")
+
+        scoped_sql = tree.sql(dialect="redshift")
+        validation = self.validate(scoped_sql)
+
+        if not validation["success"]:
+            raise ValueError(validation["error"])
+
+        return validation["sql"]

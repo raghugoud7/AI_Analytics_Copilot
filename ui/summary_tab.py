@@ -5,10 +5,10 @@ import streamlit as st
 
 
 def render_summary_tab(summary: dict) -> None:
-    st.subheader("📌 Executive Summary")
+    st.subheader("📌 Data Summary")
 
     if not summary.get("success", False):
-        st.error(summary.get("error", "Executive summary analysis failed."))
+        st.error(summary.get("error", "Data summary analysis failed."))
         return
 
     overview = summary.get("overview", {})
