@@ -1,10 +1,24 @@
-SENSITIVE_COLUMNS = {
-    "phone_number__c",
-    "person_account__c",
-    # "lead__c",
-    # "transcript__c",
-    # "call_summary__c",
-    # "transcription_uid__c",
-    # "external_id__c",
-    # "user_id__c",
+# config/privacy.py
+
+# Administrator-defined exclusions. Users cannot deselect these.
+MANDATORY_COLUMNS = frozenset(
+    {
+        "phone_number__c",
+        "person_account__c",
+    }
+)
+
+# Backward compatibility with existing imports.
+SENSITIVE_COLUMNS = MANDATORY_COLUMNS
+
+# Optional suggestions from configuration.
+# Dynamic REVIEW results will also be suggested.
+SECONDARY_PII_COLUMNS = frozenset()
+
+# Optional administrator-managed rules for individual tables.
+TABLE_PRIVACY_RULES = {
+    # "salesforce.lead": {
+    #     "mandatory": {"reviewed_contact_column"},
+    #     "suggested": {"reviewed_secondary_column"},
+    # },
 }

@@ -110,9 +110,7 @@ def render_correlation_tab(correlation_analysis: dict):
             "### 📈 Strongest Relationships"
         )
 
-        top_df = pd.DataFrame(
-            top_corr
-        )
+        top_df = pd.DataFrame(top_corr)
 
         top_df["relationship"] = (
             top_df["column_1"]

@@ -1,8 +1,8 @@
 # agents/orchestrator.py
 
 import copy
+import re
 import time
-import traceback
 from datetime import datetime, timezone
 
 import pandas as pd
@@ -23,6 +23,7 @@ from memory.chat_memory import ChatMemory
 from metadata.metadata_filter import MetadataFilter
 from utils.cache_utils import generate_cache_key
 from utils.privacy import remove_sensitive_columns
+from utils.privacy_policy import PrivacyPolicy, dataset_key, normalize_column
 
 
 class AnalyticsOrchestrator:
@@ -33,13 +34,28 @@ class AnalyticsOrchestrator:
         self,
         enable_redis: bool = False,
         approved_agent_column: str | None = None,
+        privacy_policy: PrivacyPolicy | None = None,
     ):
+        # Do not reuse responses across different privacy policies.
+        # Enable this only after access-aware cache isolation is implemented.
+        if enable_redis and privacy_policy is not None:
+            raise ValueError(
+                "Redis must remain disabled for policy-aware requests "
+                "until privacy and user-access cache isolation is implemented."
+            )
+
+        self.privacy_policy = privacy_policy
+        self.approved_agent_column = approved_agent_column
+
         self.intent_router = IntentRouterAgent()
         self.general_agent = GeneralAgent()
         self.metadata_agent = MetadataAgent(enable_redis=enable_redis)
         self.metadata_insight_agent = MetadataInsightAgent()
         self.sql_agent = SQLAgent()
-        self.sql_validator = SQLValidatorAgent()
+
+        # IMPORTANT: dynamic exclusions must reach execution-time validation.
+        self.sql_validator = SQLValidatorAgent(privacy_policy=privacy_policy)
+
         self.visualization_agent = VisualizationAgent()
         self.query_executor = QueryExecutor()
         self.schema_extractor = SchemaExtractor(self.query_executor)
@@ -48,10 +64,14 @@ class AnalyticsOrchestrator:
         self.metadata_filter = MetadataFilter()
 
         self.redis = RedisService() if enable_redis else None
-        self.approved_agent_column = approved_agent_column
+
+    # ==================================================
+    # RESPONSE AND CACHE HELPERS
+    # ==================================================
 
     @staticmethod
-    def _error(question, error, intent=None, brand=None, sql=None):
+    def _error(question, error, intent=None, brand=None):
+        # Do not include raw SQL or database exception details in errors.
         response = {
             "success": False,
             "question": question,
@@ -62,9 +82,6 @@ class AnalyticsOrchestrator:
         if intent:
             response["intent"] = intent
 
-        if sql:
-            response["sql"] = sql
-
         return response
 
     def _get_redis_response(self, cache_key):
@@ -74,8 +91,8 @@ class AnalyticsOrchestrator:
         try:
             cached = self.redis.get(cache_key)
             return copy.deepcopy(cached) if isinstance(cached, dict) else None
-        except Exception as ex:
-            print(f"Redis lookup skipped: {ex}")
+        except Exception:
+            print("Redis lookup skipped.")
             return None
 
     def _store_cache(self, cache_key, response):
@@ -84,17 +101,19 @@ class AnalyticsOrchestrator:
 
         try:
             saved = self.redis.set(cache_key, response, ttl=3600)
-            print("Response saved to Redis." if saved else "Redis storage skipped.")
-        except Exception as ex:
-            print(f"Redis storage skipped: {ex}")
+            print("Response cached." if saved else "Cache storage skipped.")
+        except Exception:
+            print("Cache storage skipped.")
 
     def _restore_chat_memory(self, question, response):
         sql = response.get("sql")
-        records = response.get("result") or []
+        records = response.get("result")
 
         if not sql or not isinstance(records, list):
             return
 
+        # Responses reaching this helper have already passed SQL validation
+        # and result cleanup.
         try:
             self.chat_memory.add(
                 question=question,
@@ -102,52 +121,199 @@ class AnalyticsOrchestrator:
                 result=records[:20],
                 insight=response.get("insight"),
             )
-        except Exception as ex:
-            print(f"Chat memory update skipped: {ex}")
+        except Exception:
+            print("Chat memory update skipped.")
 
     def _finish_response(self, question, cache_key, response):
         response["cached_at"] = datetime.now(timezone.utc).isoformat()
+
+        if self.privacy_policy is not None:
+            response["privacy_policy_fingerprint"] = self.privacy_policy.fingerprint
+
         self._restore_chat_memory(question, response)
         self._store_cache(cache_key, response)
         return response
+
+    # ==================================================
+    # PRIVACY HELPERS
+    # ==================================================
+
+    def _require_policy(self) -> PrivacyPolicy:
+        policy = self.privacy_policy
+
+        if policy is None:
+            raise ValueError("Apply privacy settings and reload the dataset first.")
+
+        if not policy.approved_columns:
+            raise ValueError("No approved columns remain in the applied policy.")
+
+        # This app currently requires brand__c for SQL scoping.
+        # Fail closed if it is excluded instead of silently bypassing policy.
+        if "brand__c" in policy.blocked_names:
+            raise ValueError(
+                "brand__c is excluded, but this application requires it "
+                "for brand scoping. Review the policy before continuing."
+            )
+
+        return policy
+
+    def _blocked_names(self) -> set[str]:
+        blocked = {
+            normalize_column(column)
+            for column in SENSITIVE_COLUMNS
+        }
+
+        if self.privacy_policy is not None:
+            blocked.update(self.privacy_policy.blocked_names)
+
+        return blocked
 
     @staticmethod
     def _add_metadata_scope(metadata, brand, schema_name, table_name):
         if not isinstance(metadata, dict):
             raise TypeError("Metadata must be a dictionary.")
 
-        scoped_metadata = dict(metadata)
-        scoped_metadata["analysis_scope"] = {
+        scoped = dict(metadata)
+        scoped["analysis_scope"] = {
             "brand": brand,
             "schema_name": schema_name,
             "table_name": table_name,
         }
-        return scoped_metadata
+        return scoped
 
-    def _get_verified_metadata(self, metadata, schema_name: str, table_name: str):
+    def _filter_policy_metadata(self, metadata: dict) -> dict:
+        """
+        Remove metadata items mentioning blocked column names.
+
+        This is not a free-text PII redactor. Metadata must contain reviewed
+        schema/business definitions, not raw personal records.
+        """
+        policy = self._require_policy()
+
+        if not isinstance(metadata, dict):
+            raise TypeError("Metadata must be a dictionary.")
+
+        approved = {
+            normalize_column(column)
+            for column in policy.approved_columns
+        }
+
+        patterns = [
+            re.compile(
+                rf"(?<!\w){re.escape(column)}(?!\w)",
+                flags=re.IGNORECASE,
+            )
+            for column in self._blocked_names()
+        ]
+
+        def mentions_blocked(value) -> bool:
+            if isinstance(value, dict):
+                return any(
+                    mentions_blocked(key) or mentions_blocked(item)
+                    for key, item in value.items()
+                )
+
+            if isinstance(value, (list, tuple)):
+                return any(mentions_blocked(item) for item in value)
+
+            return any(pattern.search(str(value)) for pattern in patterns)
+
+        result = {}
+
+        # Retain only reviewed structural metadata fields.
+        for key in ("tables", "kpis", "measures", "dimensions"):
+            items = metadata.get(key) or []
+
+            if isinstance(items, list):
+                result[key] = [
+                    item for item in items if not mentions_blocked(item)
+                ]
+            else:
+                result[key] = []
+
+        result["columns"] = [
+            column
+            for column in metadata.get("columns", [])
+            if isinstance(column, str)
+            and normalize_column(column) in approved
+            and normalize_column(column) not in self._blocked_names()
+        ]
+
+        documents = [
+            document
+            for document in metadata.get("documents", [])
+            if isinstance(document, dict)
+            and not mentions_blocked(document)
+        ]
+        result["documents"] = documents
+
+        # Rebuild context from retained documents rather than reusing
+        # potentially unfiltered context.
+        result["context"] = "\n\n".join(
+            str(document.get("content") or "")
+            for document in documents
+            if document.get("content")
+        )
+
+        result["privacy_scope"] = {
+            "policy_fingerprint": policy.fingerprint,
+            "approved_columns": list(policy.approved_columns),
+        }
+
+        return result
+
+    # ==================================================
+    # VERIFIED SCHEMA
+    # ==================================================
+
+    def _get_verified_metadata(
+        self,
+        metadata: dict,
+        schema_name: str,
+        table_name: str,
+    ) -> dict:
+        policy = self._require_policy()
+
         schema_df = self.schema_extractor.get_columns(
             schema_name=schema_name,
             table_name=table_name,
         )
 
         if not isinstance(schema_df, pd.DataFrame):
-            raise TypeError("SchemaExtractor.get_columns() must return a DataFrame.")
+            raise TypeError("SchemaExtractor must return a DataFrame.")
 
         if "column_name" not in schema_df.columns:
             raise ValueError("Schema metadata must contain column_name.")
 
-        sensitive = {str(column).casefold() for column in SENSITIVE_COLUMNS}
+        current_columns = schema_df["column_name"].dropna().astype(str).tolist()
+        current_dataset_id = dataset_key(
+            schema_name,
+            table_name,
+            current_columns,
+        )
+
+        # Validate for metadata intent as well as SQL/visualization.
+        if current_dataset_id != policy.dataset_id:
+            raise ValueError(
+                "The selected table or schema changed. "
+                "Inspect privacy and reload the dataset."
+            )
+
+        approved = {
+            normalize_column(column)
+            for column in policy.approved_columns
+        }
+        blocked = self._blocked_names()
 
         verified_columns = [
             column
-            for column in schema_df["column_name"].dropna().astype(str)
-            if column.casefold() not in sensitive
+            for column in current_columns
+            if normalize_column(column) in approved
+            and normalize_column(column) not in blocked
         ]
 
-        verified_columns = list(dict.fromkeys(verified_columns))
-
         if not verified_columns:
-            raise ValueError("No privacy-approved physical columns are available.")
+            raise ValueError("No approved physical columns are available.")
 
         verified_metadata = dict(metadata)
         verified_metadata["verified_physical_columns"] = verified_columns
@@ -156,8 +322,8 @@ class AnalyticsOrchestrator:
         if self.approved_agent_column:
             if self.approved_agent_column not in verified_columns:
                 raise ValueError(
-                    "The configured agent identifier is missing from the schema "
-                    "or excluded by the privacy policy."
+                    "The configured agent identifier is unavailable "
+                    "or excluded by the applied privacy policy."
                 )
 
             verified_metadata["business_mappings"] = {
@@ -166,6 +332,10 @@ class AnalyticsOrchestrator:
 
         return verified_metadata
 
+    # ==================================================
+    # SQL VALIDATION AND EXECUTION
+    # ==================================================
+
     def _prepare_sql(
         self,
         sql_query,
@@ -173,6 +343,8 @@ class AnalyticsOrchestrator:
         schema_name: str,
         table_name: str,
     ) -> str:
+        self._require_policy()
+
         if not isinstance(sql_query, str) or not sql_query.strip():
             raise ValueError("Generated SQL is empty.")
 
@@ -184,6 +356,7 @@ class AnalyticsOrchestrator:
         if not validation.get("success", False):
             raise ValueError(validation.get("error") or "SQL validation failed.")
 
+        # Uses your SQLGlot-based loaded-table and brand enforcement.
         scoped_sql = self.sql_validator.apply_brand_filter(
             sql=validation["sql"],
             brand=brand,
@@ -198,28 +371,53 @@ class AnalyticsOrchestrator:
 
         if not final_validation.get("success", False):
             raise ValueError(
-                final_validation.get("error") or "Brand-scoped SQL validation failed."
+                final_validation.get("error") or "Scoped SQL validation failed."
             )
 
         return final_validation["sql"]
 
+    def _execute_query(self, sql_query: str) -> pd.DataFrame:
+        policy = self._require_policy()
 
-    def _execute_query(self, sql_query):
+        # Validate again immediately before execution.
+        validation = self.sql_validator.validate(sql_query)
+
+        if not validation.get("success", False):
+            raise ValueError(
+                validation.get("error") or "SQL privacy validation failed."
+            )
+
         started = time.perf_counter()
-        result_df = self.query_executor.execute(sql_query)
 
-        print(f"SQL Execution Time: {time.perf_counter() - started:.2f}s")
+        try:
+            result_df = self.query_executor.execute(validation["sql"])
+        except Exception:
+            # Database errors can contain SQL literals or source values.
+            # Do not expose those details to the UI or ordinary logs.
+            raise RuntimeError(
+                "Database query failed. Review column types, approved mappings, "
+                "and query compatibility using restricted diagnostic tooling."
+            ) from None
+        finally:
+            print(f"SQL Execution Time: {time.perf_counter() - started:.2f}s")
 
         if not isinstance(result_df, pd.DataFrame):
-            raise TypeError("QueryExecutor.execute() must return a DataFrame.")
+            raise TypeError("QueryExecutor must return a DataFrame.")
 
-        return remove_sensitive_columns(result_df)
+        # Defense in depth. Aliased source fields must already have been
+        # blocked by SQL validation; output-name cleanup alone is insufficient.
+        return remove_sensitive_columns(result_df, policy=policy)
+
+    # ==================================================
+    # CHART VALIDATION
+    # ==================================================
 
     def _validate_chart(self, chart, result_df):
         if not isinstance(chart, dict):
             raise ValueError("Chart specification must be a dictionary.")
 
-        chart_type = str(chart.get("type", "")).lower().strip()
+        chart = dict(chart)
+        chart_type = str(chart.get("type") or "").lower().strip()
 
         if chart_type not in self.SUPPORTED_CHARTS:
             raise ValueError(f"Unsupported chart type: {chart_type}")
@@ -236,47 +434,88 @@ class AnalyticsOrchestrator:
             field = chart.get(axis)
 
             if not isinstance(field, str) or not field.strip():
-                raise ValueError(f"Chart specification requires a valid {axis} field.")
+                raise ValueError(f"Chart requires a valid {axis} field.")
 
             if field not in result_df.columns:
                 raise ValueError(
-                    f"Chart field '{field}' is not in the query output. "
-                    f"Available columns: {result_df.columns.tolist()}"
+                    f"Chart field '{field}' is not in the approved query output."
                 )
 
-        for optional_field in ("color", "size"):
-            field = chart.get(optional_field)
+        # Box grouping is optional but must be valid when supplied.
+        optional_fields = ["color", "size"]
+
+        if chart_type == "box":
+            optional_fields.append("x")
+
+        for field_name in optional_fields:
+            field = chart.get(field_name)
 
             if field is not None and field not in result_df.columns:
-                raise ValueError(f"Chart field '{field}' is not in the query output.")
+                raise ValueError(
+                    f"Chart field '{field}' is not in the approved query output."
+                )
 
         return chart
 
-    def generate_insight(self, question, sql, result, metadata, history=None):
+    # ==================================================
+    # INSIGHT GENERATION
+    # ==================================================
+
+    def generate_insight(
+        self,
+        question,
+        sql,
+        result,
+        metadata,
+        history=None,
+    ):
+        policy = self._require_policy()
+
+        # Validate the source SQL before using supplied results.
+        validation = self.sql_validator.validate(sql)
+
+        if not validation.get("success", False):
+            raise ValueError(
+                validation.get("error") or "Insight SQL violates the privacy policy."
+            )
+
         if isinstance(result, pd.DataFrame):
-            result_df = remove_sensitive_columns(result)
+            result_df = result
         elif isinstance(result, list):
-            result_df = remove_sensitive_columns(pd.DataFrame(result))
+            result_df = pd.DataFrame(result)
         else:
             raise TypeError("Insight result must be a DataFrame or list of records.")
 
+        result_df = remove_sensitive_columns(result_df, policy=policy)
+        safe_metadata = self._filter_policy_metadata(metadata)
+
+        if isinstance(metadata, dict) and isinstance(metadata.get("analysis_scope"), dict):
+            safe_metadata["analysis_scope"] = dict(metadata["analysis_scope"])
+
+        # Only call this method with results produced by this orchestrator.
+        # Arbitrary history is intentionally not forwarded to the model.
         insight = self.insight_agent.generate_insight(
             question=question,
-            metadata=metadata,
-            sql=sql,
+            metadata=safe_metadata,
+            sql=validation["sql"],
             result=result_df,
-            history=history or [],
+            history=[],
         )
 
         self._restore_chat_memory(
             question,
             {
-                "sql": sql,
+                "sql": validation["sql"],
                 "result": result_df.head(20).to_dict(orient="records"),
                 "insight": insight,
             },
         )
+
         return insight
+
+    # ==================================================
+    # MAIN REQUEST FLOW
+    # ==================================================
 
     def analyze_question(
         self,
@@ -287,7 +526,6 @@ class AnalyticsOrchestrator:
     ) -> dict:
         overall_start = time.perf_counter()
         intent = None
-        sql_query = None
 
         try:
             if not isinstance(question, str) or not question.strip():
@@ -299,10 +537,7 @@ class AnalyticsOrchestrator:
 
             question = question.strip()
 
-            # ==================================================
-            # EXACT CACHE ONLY
-            # ==================================================
-
+            # Policy-aware Redis is disabled by the constructor.
             cache_key = generate_cache_key(
                 question=question,
                 brand=brand,
@@ -310,45 +545,35 @@ class AnalyticsOrchestrator:
                 table_name=table_name,
             )
 
-            cache_start = time.perf_counter()
-            cached_response = self._get_redis_response(cache_key)
+            cached = self._get_redis_response(cache_key)
 
-            print(f"Redis Lookup: {time.perf_counter() - cache_start:.2f}s")
-
-            if isinstance(cached_response, dict) and cached_response.get("success"):
+            if isinstance(cached, dict) and cached.get("success"):
                 scope_matches = (
-                    cached_response.get("question") == question
-                    and cached_response.get("brand") == brand
-                    and cached_response.get("schema_name") == schema_name
-                    and cached_response.get("table_name") == table_name
+                    cached.get("question") == question
+                    and cached.get("brand") == brand
+                    and cached.get("schema_name") == schema_name
+                    and cached.get("table_name") == table_name
                 )
 
                 if scope_matches:
-                    cached_response["cache_hit"] = True
-                    self._restore_chat_memory(question, cached_response)
-                    print("EXACT REDIS CACHE HIT")
-                    return cached_response
+                    cached["cache_hit"] = True
+                    self._restore_chat_memory(question, cached)
+                    return cached
 
-            print("Cache miss. Semantic response reuse is disabled.")
-
-            # ==================================================
-            # INTENT DETECTION
-            # ==================================================
-
-            intent_start = time.perf_counter()
+            # The question itself is sent to the intent model.
+            # Do not enter contact values or other confidential literals
+            # unless your model endpoint and input policy permit them.
+            started = time.perf_counter()
             intent_result = self.intent_router.classify(question)
-
-            print(f"Intent Time: {time.perf_counter() - intent_start:.2f}s")
+            print(f"Intent Time: {time.perf_counter() - started:.2f}s")
 
             if not isinstance(intent_result, dict):
-                raise TypeError("IntentRouterAgent must return a dictionary.")
+                raise TypeError("Intent router must return a dictionary.")
 
             intent = intent_result.get("intent")
 
             if intent not in self.VALID_INTENTS:
-                raise ValueError(f"Unsupported intent: {intent}")
-
-            print(f"DETECTED INTENT: {intent}")
+                raise ValueError("The requested intent is unsupported.")
 
             base_response = {
                 "success": True,
@@ -359,23 +584,15 @@ class AnalyticsOrchestrator:
                 "table_name": table_name,
             }
 
-            # ==================================================
-            # GENERAL INTENT
-            # ==================================================
-
+            # General responses do not receive dataset metadata or results.
             if intent == "general":
                 general_result = self.general_agent.respond(question)
 
                 if not isinstance(general_result, dict):
-                    raise TypeError("GeneralAgent must return a dictionary.")
+                    raise TypeError("General agent must return a dictionary.")
 
                 if general_result.get("success") is False:
-                    return self._error(
-                        question=question,
-                        error=general_result.get("error") or "General response failed.",
-                        intent=intent,
-                        brand=brand,
-                    )
+                    raise ValueError("General response generation failed.")
 
                 response = {
                     **base_response,
@@ -389,46 +606,28 @@ class AnalyticsOrchestrator:
 
                 return self._finish_response(question, cache_key, response)
 
-            # ==================================================
-            # VALIDATE LOADED DATASET
-            # ==================================================
-
+            # All dataset intents require a loaded scope and applied policy.
             if not brand or not schema_name or not table_name:
                 raise ValueError(
                     "Please select a brand and load a valid schema and table first."
                 )
 
-            # ==================================================
-            # METADATA RETRIEVAL
-            # ==================================================
+            self._require_policy()
 
-            metadata_start = time.perf_counter()
-
+            started = time.perf_counter()
             metadata_result = self.metadata_agent.retrieve(
                 question=question,
                 brand=brand,
                 schema_name=schema_name,
                 table_name=table_name,
             )
-
-            print(
-                f"Metadata Retrieval Time: "
-                f"{time.perf_counter() - metadata_start:.2f}s"
-            )
+            print(f"Metadata Retrieval Time: {time.perf_counter() - started:.2f}s")
 
             if not isinstance(metadata_result, dict):
-                raise TypeError("MetadataAgent must return a dictionary.")
-
-            if not metadata_result.get("context"):
-                return self._error(
-                    question=question,
-                    error="No usable metadata was retrieved for the loaded table.",
-                    intent=intent,
-                    brand=brand,
-                )
+                raise TypeError("Metadata agent must return a dictionary.")
 
             filtered_metadata = self.metadata_filter.apply(metadata_result)
-
+            filtered_metadata = self._filter_policy_metadata(filtered_metadata)
             filtered_metadata = self._add_metadata_scope(
                 metadata=filtered_metadata,
                 brand=brand,
@@ -436,46 +635,48 @@ class AnalyticsOrchestrator:
                 table_name=table_name,
             )
 
-            # ==================================================
-            # METADATA INTENT
-            # ==================================================
+            # Verify the live schema for every dataset intent, including metadata.
+            started = time.perf_counter()
+            generation_metadata = self._get_verified_metadata(
+                metadata=filtered_metadata,
+                schema_name=schema_name,
+                table_name=table_name,
+            )
+            print(f"Schema Verification Time: {time.perf_counter() - started:.2f}s")
+
+            # If semantic documents were filtered out, retain a minimal,
+            # approved schema context rather than restoring unsafe context.
+            if not generation_metadata.get("context"):
+                approved = generation_metadata["verified_physical_columns"]
+                generation_metadata["context"] = (
+                    f"Loaded table: {schema_name}.{table_name}.\n"
+                    f"Approved physical columns: {', '.join(approved)}.\n"
+                    "No approved business definitions were retrieved. "
+                    "Do not invent column meanings, units, or relationships."
+                )
 
             if intent == "metadata":
                 metadata_question = (
                     f"{question}\n\n"
                     f"Loaded brand: {brand}.\n"
-                    f"Loaded table: {schema_name}.{table_name}.\n"
-                    "Explain the schema and business definitions in this context. "
-                    "Do not infer brand-specific counts, averages, distributions, "
-                    "or trends from schema metadata alone."
+                    "Describe only approved schema and business definitions. "
+                    "Do not infer brand-specific statistics from metadata."
                 )
-
-                insight_start = time.perf_counter()
 
                 insight = self.metadata_insight_agent.generate_insight(
                     question=metadata_question,
-                    metadata=filtered_metadata,
-                )
-
-                print(
-                    f"Metadata Insight Time: "
-                    f"{time.perf_counter() - insight_start:.2f}s"
+                    metadata=generation_metadata,
                 )
 
                 if not isinstance(insight, dict):
-                    raise TypeError("MetadataInsightAgent must return a dictionary.")
+                    raise TypeError("Metadata insight agent must return a dictionary.")
 
                 if insight.get("success") is False:
-                    return self._error(
-                        question=question,
-                        error=insight.get("error") or "Metadata insight generation failed.",
-                        intent=intent,
-                        brand=brand,
-                    )
+                    raise ValueError("Metadata insight generation failed.")
 
                 response = {
                     **base_response,
-                    "metadata": filtered_metadata,
+                    "metadata": generation_metadata,
                     "sql": "",
                     "result": None,
                     "insight": insight,
@@ -483,25 +684,8 @@ class AnalyticsOrchestrator:
 
                 return self._finish_response(question, cache_key, response)
 
-            # ==================================================
-            # VERIFIED PHYSICAL SCHEMA
-            # ==================================================
-
-            schema_start = time.perf_counter()
-
-            generation_metadata = self._get_verified_metadata(
-                metadata=filtered_metadata,
-                schema_name=schema_name,
-                table_name=table_name,
-            )
-
-            print(f"Schema Verification Time: {time.perf_counter() - schema_start:.2f}s")
-
-            # ==================================================
-            # SQL / VISUALIZATION GENERATION
-            # ==================================================
-
-            generation_start = time.perf_counter()
+            # SQL and visualization receive only approved metadata.
+            started = time.perf_counter()
             chart = None
 
             if intent == "visualization":
@@ -510,49 +694,37 @@ class AnalyticsOrchestrator:
                     metadata=generation_metadata,
                     brand=brand,
                 )
-                generation_label = "Visualization Generation"
-
-            elif intent == "sql_query":
+                label = "Visualization Generation"
+            else:
                 generated = self.sql_agent.generate_sql(
                     question=question,
                     metadata=generation_metadata,
                     brand=brand,
                 )
-                generation_label = "SQL Generation"
+                label = "SQL Generation"
 
-            else:
-                raise ValueError(f"Unsupported generation intent: {intent}")
-
-            print(
-                f"{generation_label} Time: "
-                f"{time.perf_counter() - generation_start:.2f}s"
-            )
+            print(f"{label} Time: {time.perf_counter() - started:.2f}s")
 
             if not isinstance(generated, dict):
                 raise TypeError("Generation agent must return a dictionary.")
 
             if not generated.get("success", False):
-                return {
-                    **self._error(
-                        question=question,
-                        error=generated.get("error") or "Generation failed.",
-                        intent=intent,
-                        brand=brand,
+                # Avoid forwarding arbitrary raw model output or SQL in errors.
+                return self._error(
+                    question=question,
+                    error=(
+                        "The requested analysis could not be generated using "
+                        "the approved columns and available business mappings."
                     ),
-                    "metadata": generation_metadata,
-                }
+                    intent=intent,
+                    brand=brand,
+                )
 
             if intent == "visualization":
                 chart = generated.get("chart")
 
                 if not isinstance(chart, dict) or not chart:
                     raise ValueError("A valid chart specification was not generated.")
-
-            # ==================================================
-            # SQL VALIDATION AND BRAND SCOPING
-            # ==================================================
-
-            validation_start = time.perf_counter()
 
             sql_query = self._prepare_sql(
                 sql_query=generated.get("sql"),
@@ -561,36 +733,11 @@ class AnalyticsOrchestrator:
                 table_name=table_name,
             )
 
-            print(
-                f"SQL Validation Time: "
-                f"{time.perf_counter() - validation_start:.2f}s"
-            )
-
-            print("\n" + "=" * 80)
-            print(f"EXECUTING {intent.upper()} SQL")
-            print("=" * 80)
-            print(sql_query)
-            print("=" * 80)
-
-            # ==================================================
-            # QUERY EXECUTION AND PII CLEANUP
-            # ==================================================
-
+            # Do not print raw SQL, prompts, or query results.
             result_df = self._execute_query(sql_query)
-
-            # _execute_query() already validates the DataFrame
-            # response and removes sensitive columns.
-
-            # ==================================================
-            # CHART VALIDATION
-            # ==================================================
 
             if chart is not None:
                 chart = self._validate_chart(chart, result_df)
-
-            # ==================================================
-            # RESPONSE
-            # ==================================================
 
             response = {
                 **base_response,
@@ -610,21 +757,28 @@ class AnalyticsOrchestrator:
 
             return self._finish_response(question, cache_key, response)
 
-        except Exception as ex:
-            print("\n" + "=" * 80)
-            print("ORCHESTRATOR ERROR")
-            print("=" * 80)
-            print(str(ex))
-            print("=" * 80)
-
-            traceback.print_exc()
-
+        except (ValueError, TypeError) as ex:
+            # These are application validation messages, not database payloads.
+            print(f"Request validation failed: {type(ex).__name__}")
             return self._error(
                 question=question,
                 error=ex,
                 intent=intent,
                 brand=brand,
-                sql=sql_query,
+            )
+
+        except Exception as ex:
+            # Do not print raw exception messages or tracebacks:
+            # upstream libraries may include SQL literals or personal values.
+            print(f"Request failed: {type(ex).__name__}")
+            return self._error(
+                question=question,
+                error=(
+                    "The request could not be completed. "
+                    "Check the approved schema, mappings, and service connectivity."
+                ),
+                intent=intent,
+                brand=brand,
             )
 
         finally:
