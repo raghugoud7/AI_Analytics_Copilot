@@ -1,203 +1,384 @@
 # AI Analytics Copilot
 
-Enterprise AI-powered Analytics Assistant for large-scale datasets.
+Enterprise AI-powered Analytics Assistant for Amazon Redshift datasets.
 
-AI Analytics Copilot enables business users, analysts, and decision-makers to ask natural language questions about enterprise data and receive deep analytical insights powered by Large Language Models (LLMs), Retrieval-Augmented Generation (RAG), and intelligent SQL generation.
+AI Analytics Copilot enables business users, analysts, and decision-makers to interact with enterprise data using natural language and receive intelligent insights, automated analytics, visualizations, and privacy-aware data exploration powered by Generative AI.
 
 ---
 
-## Overview
+# Overview
 
-Modern enterprises generate massive volumes of data, making it difficult for business users to extract insights quickly.
+Modern enterprises generate massive volumes of structured and semi-structured data, making it difficult for users to extract meaningful insights quickly.
 
 AI Analytics Copilot bridges this gap by combining:
 
 - Amazon Redshift
-- OpenAI / Azure OpenAI
-- LangChain
-- Vector Databases (FAISS / ChromaDB)
+- Azure OpenAI / OpenAI
 - Streamlit
+- FAISS Vector Search
+- Metadata Intelligence
+- Multi-Agent AI Architecture
+- Privacy-Aware Analytics
 
-to create an intelligent analytics assistant capable of:
+The platform allows users to:
 
-- Answering business questions
-- Performing root cause analysis
-- Generating executive summaries
-- Identifying trends and anomalies
-- Providing recommendations
-- Generating SQL dynamically
+- Explore datasets without writing SQL
+- Ask business questions in natural language
+- Generate SQL automatically
+- Visualize data instantly
+- Perform advanced analytics
+- Detect trends and anomalies
+- Generate executive summaries
+- Protect sensitive information using privacy controls
+- Load full datasets when deeper analysis is required
 
 ---
 
-## Key Features
+# Key Features
 
-### Data Connectivity
+## Data Connectivity
 
 - Amazon Redshift Integration
-- Schema Discovery
-- Metadata Extraction
-- Data Profiling
-
-### AI Analytics
-
-- Natural Language Querying
-- Executive Summaries
-- Trend Analysis
-- KPI Analysis
-- Root Cause Identification
-- Business Recommendations
-
-### Intelligent Retrieval
-
-- LangChain Integration
-- RAG Architecture
-- Vector Database Search
-- Metadata Retrieval
-
-### Chat Experience
-
-- Streamlit Chat Interface
-- Conversational Analytics
-- Context-Aware Responses
-
-### Enterprise Security
-
-- Credentials stored securely
-- No database passwords exposed in UI
-- Support for Secrets Management
-- Read-only analytics access
+- Dynamic Schema Discovery
+- Column Metadata Extraction
+- Brand-Level Data Loading
+- Metadata Profiling
 
 ---
 
-## Architecture
+## Conversational Analytics
+
+- Natural Language Querying
+- Business Question Answering
+- Metadata Intelligence
+- Executive Summaries
+- Automated Recommendations
+- Root Cause Analysis
+
+---
+
+## AI-Powered SQL Generation
+
+- Text-to-SQL Generation
+- SQL Validation
+- Schema-Aware Query Generation
+- Brand-Level Query Enforcement
+- Privacy-Aware SQL Execution
+
+---
+
+## Visualization Intelligence
+
+- Automatic Chart Generation
+- Plotly Visualizations
+- Bar Charts
+- Line Charts
+- Area Charts
+- Scatter Plots
+- Histograms
+- Box Plots
+- Pie Charts
+
+---
+
+## Advanced Analytics
+
+- Data Profiling
+- Executive Summary
+- KPI Analysis
+- Segment Analysis
+- Trend Analysis
+- Correlation Analysis
+- Outlier Detection
+- Driver Analysis
+
+---
+
+## Privacy & Governance
+
+- Dynamic PII Detection
+- Privacy Inspection Workflow
+- Privacy Policy Builder
+- Mandatory Sensitive Field Exclusions
+- Optional User-Controlled Exclusions
+- Privacy-Aware Query Validation
+- Result Sanitization
+
+---
+
+## Full Dataset Analytics
+
+- Sample-Based Analysis
+- Full Dataset Loading
+- Brand-Specific Analytics
+- Analysis Refresh Controls
+- Memory-Aware Processing
+- Privacy-Preserving Data Retrieval
+
+---
+
+## Metadata Intelligence
+
+- Metadata Repository
+- Schema Profiling
+- Column Intelligence
+- Vector Search
+- Semantic Metadata Retrieval
+- Dataset Understanding
+
+---
+
+# Architecture
 
 ```text
-+------------------+
-| Streamlit UI     |
-+------------------+
-          |
-          v
-+------------------+
-| LangChain Agent  |
-+------------------+
-      |        |
-      |        |
-      v        v
+┌──────────────────────────────────────────────┐
+│                 Streamlit UI                 │
+│──────────────────────────────────────────────│
+│ Data Overview                                │
+│ Data Analysis                                │
+│ Data Quality                                 │
+│ Chat Analytics                               │
+│ Privacy Controls                             │
+│ Full Data Controls                           │
+└──────────────────────────────────────────────┘
+                        │
+                        ▼
+┌──────────────────────────────────────────────┐
+│           Analytics Orchestrator             │
+└──────────────────────────────────────────────┘
+                        │
+       ┌────────────────┼────────────────┐
+       ▼                ▼                ▼
 
-+------------------+       +------------------+
-| Vector Database  |       | SQL Generator    |
-| FAISS/ChromaDB   |       +------------------+
-+------------------+                 |
-                                    v
-                           +------------------+
-                           | Amazon Redshift  |
-                           +------------------+
+┌──────────────┐ ┌──────────────┐ ┌──────────────┐
+│ Metadata     │ │ SQL Agent    │ │ Visualization│
+│ Agent        │ │              │ │ Agent        │
+└──────────────┘ └──────────────┘ └──────────────┘
+       │                │
+       ▼                ▼
 
-                                    |
-                                    v
+┌──────────────────────────────────────────────┐
+│            Intent Router Agent               │
+└──────────────────────────────────────────────┘
+                        │
+                        ▼
 
-                           +------------------+
-                           | GPT-4o / GPT-5   |
-                           +------------------+
+┌──────────────────────────────────────────────┐
+│         Metadata Intelligence Layer          │
+│──────────────────────────────────────────────│
+│ Metadata Repository                          │
+│ Metadata Profiling                           │
+│ FAISS Retrieval                              │
+│ Semantic Search                              │
+└──────────────────────────────────────────────┘
+                        │
+                        ▼
 
-                                    |
-                                    v
+┌──────────────────────────────────────────────┐
+│            SQL Validator Agent               │
+│──────────────────────────────────────────────│
+│ Privacy Enforcement                          │
+│ Brand Enforcement                            │
+│ Query Validation                             │
+│ Sensitive Column Protection                  │
+└──────────────────────────────────────────────┘
+                        │
+                        ▼
 
-                           +------------------+
-                           | Business Insights|
-                           +------------------+
+┌──────────────────────────────────────────────┐
+│              Amazon Redshift                 │
+└──────────────────────────────────────────────┘
+                        │
+                        ▼
+
+┌──────────────────────────────────────────────┐
+│       Privacy & Governance Layer             │
+│──────────────────────────────────────────────│
+│ PII Detector                                 │
+│ Privacy Policy Builder                       │
+│ Dynamic Field Classification                 │
+│ Sensitive Column Removal                     │
+└──────────────────────────────────────────────┘
+                        │
+                        ▼
+
+┌──────────────────────────────────────────────┐
+│          Data Analysis Engine                │
+│──────────────────────────────────────────────│
+│ Data Profiling                               │
+│ Executive Summary                            │
+│ KPI Analysis                                 │
+│ Segment Analysis                             │
+│ Trend Analysis                               │
+│ Correlation Analysis                         │
+│ Outlier Detection                            │
+│ Driver Analysis                              │
+└──────────────────────────────────────────────┘
+                        │
+                        ▼
+
+┌──────────────────────────────────────────────┐
+│             GPT-5 / Azure OpenAI             │
+└──────────────────────────────────────────────┘
+                        │
+                        ▼
+
+┌──────────────────────────────────────────────┐
+│    Insights, Visualizations & SQL Output     │
+└──────────────────────────────────────────────┘
 ```
 
 ---
 
-## Technology Stack
+# Technology Stack
 
-### Frontend
+## Frontend
 
 - Streamlit
-
-### Backend
-
-- Python
-
-### Database
-
-- Amazon Redshift
-
-### AI
-
-- OpenAI
-- Azure OpenAI
-- LangChain
-
-### Vector Databases
-
-- FAISS
-- ChromaDB
-
-### Analytics
-
-- Pandas
-- Polars
-- DuckDB
+- Plotly
 
 ---
 
-## Project Structure
+## Backend
+
+- Python 3.11+
+- Pandas
+- NumPy
+
+---
+
+## Database
+
+- Amazon Redshift
+
+---
+
+## AI / LLM
+
+- Azure OpenAI
+- OpenAI GPT Models
+
+---
+
+## Retrieval
+
+- FAISS
+- Vector Embeddings
+- Metadata Search
+
+---
+
+## Analytics
+
+- Pandas
+- Scikit-Learn
+- SciPy
+
+---
+
+## Validation
+
+- SQLGlot
+
+---
+
+## Optional Caching
+
+- Redis
+
+---
+
+# Project Structure
 
 ```text
 AI_Analytics_Copilot
 │
 ├── app.py
 │
+├── agents/
+│   ├── orchestrator.py
+│   ├── general_agent.py
+│   ├── metadata_agent.py
+│   ├── metadata_insight_agent.py
+│   ├── sql_agent.py
+│   ├── sql_validator_agent.py
+│   ├── visualization_agent.py
+│   └── intent_router_agent.py
+│
+├── analytics/
+│   ├── data_analysis_orchestrator.py
+│   ├── profiling_analysis.py
+│   ├── summary_analysis.py
+│   ├── kpi_analysis.py
+│   ├── segment_analysis.py
+│   ├── trend_analysis.py
+│   ├── correlation_analysis.py
+│   ├── outlier_analysis.py
+│   └── driver_analysis.py
+│
+├── cache/
+│   └── redis_service.py
+│
 ├── config/
+│   ├── privacy.py
 │   ├── settings.py
 │   └── prompts.py
 │
 ├── database/
-│   ├── redshift_service.py
 │   ├── query_executor.py
-│   └── schema_extractor.py
+│   ├── schema_extractor.py
+│   └── redshift_service.py
 │
 ├── llm/
-│   ├── llm_service.py
-│   ├── rag_pipeline.py
-│   ├── sql_generator.py
-│   └── insight_generator.py
+│   └── llm_service.py
 │
-├── vectorstore/
-│   ├── embeddings.py
-│   ├── faiss_manager.py
-│   └── metadata_index.py
+├── memory/
+│   └── chat_memory.py
 │
-├── analytics/
-│   ├── profiler.py
-│   ├── anomaly_detector.py
-│   ├── trend_analyzer.py
-│   └── kpi_generator.py
+├── metadata/
+│   ├── metadata_filter.py
+│   ├── metadata_repository_builder.py
+│   └── metadata_profiler_agent.py
+│
+├── prompts/
+│   ├── metadata_prompt.py
+│   ├── sql_prompt.py
+│   └── insight_prompt.py
 │
 ├── ui/
-│   ├── sidebar.py
-│   ├── chat_page.py
-│   ├── data_profile.py
-│   └── settings_page.py
+│   ├── summary_tab.py
+│   ├── kpis_tab.py
+│   ├── segment_tab.py
+│   ├── trend_tab.py
+│   ├── correlation_tab.py
+│   ├── outliers_tab.py
+│   ├── drivers_tab.py
+│   ├── profiling_tab.py
+│   ├── chat_visualization.py
+│   └── full_data_controls.py
 │
-├── cache/
-├── logs/
+├── utils/
+│   ├── privacy.py
+│   ├── privacy_policy.py
+│   ├── pii_detector.py
+│   └── cache_utils.py
 │
-├── .streamlit/
-│   └── secrets.toml
+├── vectorstore/
+│   ├── build_index.py
+│   ├── embeddings.py
+│   └── faiss_manager.py
 │
 ├── requirements.txt
 ├── README.md
-└── .gitignore
+└── .streamlit/
+    └── secrets.toml
 ```
 
 ---
 
-## Installation
+# Installation
 
-### Clone Repository
+## Clone Repository
 
 ```bash
 git clone https://github.com/<your-org>/AI_Analytics_Copilot.git
@@ -205,27 +386,33 @@ git clone https://github.com/<your-org>/AI_Analytics_Copilot.git
 cd AI_Analytics_Copilot
 ```
 
-### Create Virtual Environment
+---
+
+## Create Virtual Environment
 
 ```bash
 python -m venv .venv
 ```
 
-### Activate Environment
+---
 
-Windows
+## Activate Environment
+
+### Windows
 
 ```bash
 .venv\Scripts\activate
 ```
 
-Linux/Mac
+### Linux / Mac
 
 ```bash
 source .venv/bin/activate
 ```
 
-### Install Dependencies
+---
+
+## Install Dependencies
 
 ```bash
 pip install -r requirements.txt
@@ -233,7 +420,7 @@ pip install -r requirements.txt
 
 ---
 
-## Configuration
+# Configuration
 
 Create:
 
@@ -250,18 +437,14 @@ REDSHIFT_DB="your-database"
 REDSHIFT_USER="service-account"
 REDSHIFT_PASSWORD="password"
 
-OPENAI_API_KEY="your-key"
+AZURE_OPENAI_API_KEY="your-key"
+AZURE_OPENAI_ENDPOINT="your-endpoint"
+AZURE_OPENAI_DEPLOYMENT="gpt-5"
 ```
-
-### Important
-
-- Never commit secrets to GitHub.
-- Add secrets files to `.gitignore`.
-- Use service accounts whenever possible.
 
 ---
 
-## Running the Application
+# Running The Application
 
 ```bash
 streamlit run app.py
@@ -275,158 +458,198 @@ http://localhost:8501
 
 ---
 
-## Typical User Workflow
+# Typical User Workflow
 
 ### Step 1
 
-Connect to Redshift metadata.
+Fetch schema metadata and available brands.
 
 ### Step 2
 
-Load schema information.
+Select a brand.
 
 ### Step 3
 
-Ask questions.
+Run Privacy Inspection.
 
-Examples:
+### Step 4
 
-```text
-Which products have declining sales trends?
-```
+Review detected sensitive fields.
 
-```text
-Identify regions contributing most to revenue growth.
-```
+### Step 5
 
-```text
-What are the top customer churn drivers?
-```
+Apply Privacy Settings and Load Dataset.
 
-```text
-Provide executive summary for last quarter performance.
-```
+### Step 6
+
+Explore:
+
+- Data Overview
+- Data Analysis
+- Data Quality
+
+### Step 7
+
+Ask questions using Chat Analytics.
+
+### Step 8
+
+Load Full Data if deeper analysis is required.
 
 ---
 
-## Example Analytics Questions
+# Example Analytics Questions
 
-### Executive Insights
+## Business Insights
 
 ```text
-Summarize the overall business performance.
+Summarize overall business performance.
 ```
 
 ```text
 What are the most important trends?
 ```
 
-### Sales Analytics
-
 ```text
-Why are sales declining in APAC?
+Provide key recommendations based on this dataset.
 ```
 
-```text
-Which products show highest growth?
-```
+---
 
-### Customer Analytics
-
-```text
-Identify high-value customer segments.
-```
-
-```text
-Analyze churn behavior.
-```
-
-### Operations Analytics
+## Quality Analytics
 
 ```text
 What factors influence call quality?
 ```
 
 ```text
-Identify operational bottlenecks.
+Which segments have the highest QA scores?
 ```
 
 ---
 
-## Future Roadmap
+## Trend Analytics
 
-### Phase 1
+```text
+Show monthly QA score trends.
+```
 
-- Streamlit UI
-- Redshift Integration
-- Metadata Extraction
-- Chat Interface
-
-### Phase 2
-
-- LangChain
-- RAG
-- FAISS
-- ChromaDB
-
-### Phase 3
-
-- Text-to-SQL Engine
-- SQL Validation
-- Query Optimization
-
-### Phase 4
-
-- Dashboard Generation
-- Chart Generation
-- Plotly Visualizations
-
-### Phase 5
-
-- Multi-Agent AI
-- Forecasting
-- Predictive Analytics
-- Automated Insights
-- Root Cause Analysis
+```text
+Which brands are improving over time?
+```
 
 ---
 
-## Security Guidelines
+## Driver Analysis
 
-### Recommended
+```text
+What variables drive overall QA score?
+```
 
-✅ Store credentials in Secrets Manager
+```text
+Which features most strongly influence customer satisfaction?
+```
 
-✅ Use Read-Only Database Access
+---
+
+## Visualization Requests
+
+```text
+Plot average QA score by language.
+```
+
+```text
+Create a trend chart for call quality.
+```
+
+```text
+Show a distribution of sentiment scores.
+```
+
+---
+
+# Security Guidelines
+
+## Recommended
+
+✅ Use Read-Only Redshift Access
+
+✅ Store Credentials in Secrets Manager
 
 ✅ Enable Audit Logging
 
-✅ Use Corporate SSO
-
 ✅ Restrict Network Access
 
-### Avoid
+✅ Apply Privacy Inspection Before Loading Data
 
-❌ Hardcoded passwords
-
-❌ User-entered database credentials
-
-❌ Direct production table access
-
-❌ Unlimited SQL execution
+✅ Use Mandatory Sensitive Data Exclusions
 
 ---
 
-## Author
+## Avoid
+
+❌ Hardcoded Credentials
+
+❌ Direct Production Write Access
+
+❌ Exposing Sensitive Columns
+
+❌ Unvalidated SQL Execution
+
+❌ Sharing Secrets in Source Control
+
+---
+
+# Future Roadmap
+
+## Completed ✅
+
+- Amazon Redshift Integration
+- Metadata Retrieval
+- Text-to-SQL
+- Metadata Intelligence
+- Visualization Generation
+- Privacy Controls
+- Dynamic PII Detection
+- SQL Validation
+- Data Analysis Dashboard
+- Full Dataset Loading
+- Multi-Agent Architecture
+
+---
+
+## In Progress 🚧
+
+- Semantic Response Caching
+- Access-Aware Caching
+- Enhanced Metadata Intelligence
+- Performance Optimization
+- Large Dataset Scaling
+
+---
+
+## Planned 📌
+
+- Predictive Analytics
+- Forecasting
+- What-If Analysis
+- Multi-Table Analytics
+- Automated Alerting
+- Scheduled Insights
+- Role-Based Access Control
+
+---
+
+# Author
 
 **Raghavender Goud Palem**
 
-Consultant - AI & Data Science
+Consultant – AI & Data Science
 
 Enterprise Analytics & AI Solutions
 
 ---
 
-## Vision
+# Vision
 
-Transform enterprise data into actionable intelligence through conversational AI, advanced analytics, and intelligent decision support.
+Transform enterprise data into actionable intelligence through conversational AI, advanced analytics, privacy-aware governance, and intelligent decision support.
