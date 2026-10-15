@@ -22,8 +22,18 @@ from ui.profiling_tab import render_profiling_tab
 from ui.segment_tab import render_segment_tab
 from ui.summary_tab import render_summary_tab
 from ui.trend_tab import render_trend_tab
-from utils.privacy import remove_sensitive_columns
 
+from utils.privacy_policy import normalize_column
+from utils.privacy import remove_sensitive_columns
+from config.privacy import MANDATORY_COLUMNS
+from utils.pii_detector import detect_pii_columns
+from utils.privacy_policy import (
+    build_policy,
+    classify_columns,
+    dataset_key,
+    detection_lists,
+)
+from ui.full_data_controls import render_full_data_controls
 
 # ==========================================================
 # PAGE CONFIGURATION
@@ -99,6 +109,7 @@ DEFAULT_STATE = {
     "generated_insight": None,
     "brands": [],
     "selected_brand": None,
+    "previous_selected_brand": None,
     "loaded_brand": None,
     "brands_scope": None,
     "dataset_version": None,
@@ -112,7 +123,22 @@ for key, default in DEFAULT_STATE.items():
     if key not in st.session_state:
         st.session_state[key] = default
 
+privacy_defaults = {
+    "privacy_schema_df": None,
+    "privacy_schema_scope": None,
+    "pii_detection": None,
+    "applied_privacy_policy": None,
+}
 
+for key, value in privacy_defaults.items():
+    if key not in st.session_state:
+        st.session_state[key] = value
+        
+if "full_data_loaded" not in st.session_state:
+    st.session_state.full_data_loaded = False
+
+if "full_load_message" not in st.session_state:
+    st.session_state.full_load_message = None
 # ==========================================================
 # RESOURCES
 # ==========================================================
@@ -126,13 +152,17 @@ def get_query_executor():
 def get_data_analyzer():
     return DataAnalysisOrchestrator()
 
-
 def get_orchestrator():
-    """Keep chat memory isolated to this session and loaded dataset."""
+    policy = st.session_state.applied_privacy_policy
+
+    if policy is None:
+        raise ValueError("Apply privacy settings and load a dataset first.")
+
     scope = (
         st.session_state.schema_name,
         st.session_state.table_name,
         st.session_state.loaded_brand,
+        policy.fingerprint,
     )
 
     if (
@@ -141,6 +171,7 @@ def get_orchestrator():
     ):
         st.session_state.chat_orchestrator = AnalyticsOrchestrator(
             enable_redis=False,
+            privacy_policy=st.session_state.applied_privacy_policy,
         )
         st.session_state.chat_orchestrator_scope = scope
 
@@ -205,16 +236,72 @@ def load_brands(schema_name: str, table_name: str) -> list[str]:
     return [str(value) for value in result["brand"].dropna().tolist()]
 
 
+def inspect_dataset_privacy(
+    schema_name: str,
+    table_name: str,
+    brand_name: str,
+    schema_df: pd.DataFrame,
+) -> pd.DataFrame:
+    columns = schema_df["column_name"].dropna().astype(str).tolist()
+    mandatory = {str(column).strip().casefold() for column in MANDATORY_COLUMNS}
+
+    # Do not retrieve values already known to be mandatory exclusions.
+    inspection_columns = [
+        column
+        for column in columns
+        if column.strip().casefold() not in mandatory
+    ]
+
+    if not inspection_columns:
+        raise ValueError("No columns are available for privacy inspection.")
+
+    table = f"{quote_identifier(schema_name)}.{quote_identifier(table_name)}"
+    projection = ", ".join(quote_column(column) for column in inspection_columns)
+
+    inspection_df = execute_dataframe(
+        f"""
+        SELECT {projection}
+        FROM {table}
+        WHERE brand__c = {quote_literal(brand_name)}
+        LIMIT 100
+        """
+    )
+
+    # Use verified database types to identify date/time columns.
+    date_columns: list[str] = []
+
+    if "data_type" in schema_df.columns:
+        data_type_series = schema_df["data_type"].astype("string")
+        date_mask = data_type_series.str.contains(
+            r"\b(?:date|timestamp|time)\b",
+            case=False,
+            regex=True,
+            na=False,
+        )
+        date_columns = [
+            str(column)
+            for column in schema_df.loc[date_mask, "column_name"]
+            .dropna()
+            .astype(str)
+            .tolist()
+        ]
+
+    # Raw values remain local to this helper; return only detection decisions.
+    return detect_pii_columns(
+        inspection_df,
+        sample_rows=100,
+        date_columns=date_columns,
+    )
+
+
 def load_table_metadata(
     schema_name: str,
     table_name: str,
     brand_name: str,
+    policy,
+    row_limit: int | None = 10000,
 ):
-    executor = get_query_executor()
-    extractor = SchemaExtractor(executor)
-
-    table = f"{quote_identifier(schema_name)}.{quote_identifier(table_name)}"
-    brand_literal = quote_literal(brand_name)
+    extractor = SchemaExtractor(get_query_executor())
 
     metadata = extractor.get_columns(
         schema_name=schema_name,
@@ -224,28 +311,34 @@ def load_table_metadata(
     if not isinstance(metadata, pd.DataFrame) or "column_name" not in metadata.columns:
         raise ValueError("Schema metadata must contain column_name.")
 
-    sensitive = {str(column).casefold() for column in SENSITIVE_COLUMNS}
+    columns = metadata["column_name"].dropna().astype(str).tolist()
 
-    safe_metadata = metadata.loc[
-        ~metadata["column_name"].astype(str).str.casefold().isin(sensitive)
-    ].copy()
+    if dataset_key(schema_name, table_name, columns) != policy.dataset_id:
+        raise ValueError("Schema changed. Fetch columns and inspect privacy again.")
 
-    safe_columns = safe_metadata["column_name"].dropna().astype(str).tolist()
+    approved_columns: list[str] = [str(column) for column in list(policy.approved_columns)]
 
-    if not safe_columns:
-        raise ValueError("No privacy-approved columns are available.")
+    if not approved_columns:
+        raise ValueError("No approved columns remain.")
 
-    projection = ", ".join(quote_column(column) for column in safe_columns)
+    table = f"{quote_identifier(schema_name)}.{quote_identifier(table_name)}"
+    projection = ", ".join(quote_column(column) for column in approved_columns)
+    brand_literal = quote_literal(brand_name)
+
+    limit_clause = ""
+
+    if row_limit is not None:
+        limit_clause = f"LIMIT {row_limit}"
 
     sample_df = execute_dataframe(
         f"""
         SELECT {projection}
         FROM {table}
         WHERE brand__c = {brand_literal}
-        LIMIT 15000
+        {limit_clause}
         """
     )
-    sample_df = remove_sensitive_columns(sample_df)
+    sample_df = remove_sensitive_columns(sample_df, policy)
 
     count_df = execute_dataframe(
         f"""
@@ -258,9 +351,11 @@ def load_table_metadata(
     if count_df.empty or "row_count" not in count_df.columns:
         raise ValueError("Unable to retrieve the brand-specific row count.")
 
-    row_count = int(count_df["row_count"].iloc[0])
+    safe_metadata = metadata.loc[
+        metadata["column_name"].isin(approved_columns)
+    ].copy()
 
-    return safe_metadata, sample_df, row_count
+    return safe_metadata, sample_df, int(count_df["row_count"].iloc[0])
 
 
 def clear_chat():
@@ -405,12 +500,6 @@ menu = st.sidebar.radio(
     ["Data Overview", "Data Analysis", "Data Quality", "Chat Analytics"],
 )
 
-# menu = st.sidebar.selectbox(
-#     "Navigation",
-#     ["Data Overview", "Data Analysis", "Data Quality", "Chat Analytics"],
-#     key="navigation_menu",
-# )
-
 st.sidebar.divider()
 st.sidebar.subheader("Connect Redshift")
 
@@ -418,33 +507,57 @@ schema_input = st.sidebar.text_input("Schema", value="salesforce").strip()
 table_input = st.sidebar.text_input("Table Name").strip()
 input_scope = (schema_input, table_input)
 
-# schema_col, table_col = st.sidebar.columns([1, 1.5])
-# schema_input = schema_col.text_input("Schema",value="salesforce",).strip()
-# table_input = table_col.text_input("Table",).strip()
-
-input_scope = (schema_input, table_input)
-
-# Invalidate fetched brands when the schema or table changes.
+# Reset draft information when the table changes.
+# The previously loaded dataset remains unchanged until a successful reload.
 if (
     st.session_state.brands_scope is not None
     and st.session_state.brands_scope != input_scope
 ):
     st.session_state.brands = []
-    st.session_state.selected_brand = None
     st.session_state.brands_scope = None
+    st.session_state.selected_brand = None
+    st.session_state.previous_selected_brand = None
+    
+    st.session_state.privacy_schema_df = None
+    st.session_state.privacy_schema_scope = None
+    st.session_state.pii_detection = None
     st.session_state.pop("brand_selector", None)
+    
+    st.session_state.full_data_loaded = False
+    st.session_state.full_load_message = None
+
+    st.session_state.analysis_result = None
+    st.session_state.analysis_version = None
+    
+# ==========================================================
+# FETCH SCHEMA AND BRANDS
+# ==========================================================
 
 if st.sidebar.button(
-    "Fetch Brands",
+    "Fetch Brands & Columns",
     disabled=not schema_input or not table_input,
 ):
     try:
-        with st.spinner("Fetching brands..."):
+        with st.spinner("Fetching schema and brands..."):
+            schema_df = SchemaExtractor(get_query_executor()).get_columns(
+                schema_name=schema_input,
+                table_name=table_input,
+            )
+
+            if (
+                not isinstance(schema_df, pd.DataFrame)
+                or "column_name" not in schema_df.columns
+            ):
+                raise ValueError("Schema metadata must contain column_name.")
+
             brands = load_brands(schema_input, table_input)
 
         st.session_state.brands = brands
         st.session_state.brands_scope = input_scope
+        st.session_state.privacy_schema_df = schema_df
+        st.session_state.privacy_schema_scope = input_scope
         st.session_state.selected_brand = None
+        st.session_state.pii_detection = None
         st.session_state.pop("brand_selector", None)
 
         if brands:
@@ -456,45 +569,217 @@ if st.sidebar.button(
         st.session_state.brands = []
         st.session_state.brands_scope = None
         st.session_state.selected_brand = None
-        st.sidebar.error(f"Unable to fetch brands: {ex}")
+        st.session_state.privacy_schema_df = None
+        st.session_state.privacy_schema_scope = None
+        st.session_state.pii_detection = None
+        st.sidebar.error(f"Unable to fetch dataset information: {ex}")
 
-brands = st.session_state.brands
+# ==========================================================
+# SELECT BRAND
+# ==========================================================
 
-if brands:
-    selected_brand = st.sidebar.selectbox(
+if st.session_state.brands:
+    st.session_state.selected_brand = st.sidebar.selectbox(
         "Select Brand",
-        options=brands,
+        options=st.session_state.brands,
         index=None,
         placeholder="Choose one brand",
         key="brand_selector",
     )
-    st.session_state.selected_brand = selected_brand
 
-can_load = (
-    bool(st.session_state.selected_brand)
+brand = st.session_state.selected_brand
+previous_selected_brand = st.session_state.get("previous_selected_brand")
+
+if brand != previous_selected_brand:
+    st.session_state.previous_selected_brand = brand
+
+    # Clear status messages associated with the previous selection.
+    st.session_state.full_load_message = None
+
+    # Do not mark the currently loaded sample as full data for a newly
+    # selected brand.
+    if brand != st.session_state.loaded_brand:
+        st.session_state.full_data_loaded = False
+
+schema_df = st.session_state.privacy_schema_df
+
+can_inspect = (
+    bool(brand)
     and st.session_state.brands_scope == input_scope
+    and st.session_state.privacy_schema_scope == input_scope
+    and isinstance(schema_df, pd.DataFrame)
 )
 
-if st.sidebar.button("Load Dataset", disabled=not can_load):
-    try:
-        brand = st.session_state.selected_brand
+columns = []
+current_dataset_id = None
 
-        with st.spinner("Loading brand-specific data..."):
+if can_inspect:
+    columns = schema_df["column_name"].dropna().astype(str).tolist()
+    current_dataset_id = dataset_key(schema_input, table_input, columns)
+
+inspection_scope = (current_dataset_id, brand)
+
+# A report for another brand or schema must not be reused.
+detection = st.session_state.pii_detection
+
+if detection is not None and detection["scope"] != inspection_scope:
+    st.session_state.pii_detection = None
+    detection = None
+
+# ==========================================================
+# INSPECT PRIVACY
+# ==========================================================
+
+if st.sidebar.button("Inspect Privacy — 100 Rows", disabled=not can_inspect):
+    try:
+        with st.spinner("Inspecting contact patterns locally..."):
+            report = inspect_dataset_privacy(
+                schema_name=schema_input,
+                table_name=table_input,
+                brand_name=brand,
+                schema_df=schema_df,
+            )
+
+            detected_mandatory, detected_suggested, date_columns = detection_lists(
+                report
+            )
+
+        # Preserve locked detections across repeated inspections of this
+        # dataset during the current session.
+        registry_key = f"pii_locked_{current_dataset_id}"
+        previous_locked = set(st.session_state.get(registry_key, []))
+        previous_locked.update(detected_mandatory)
+        st.session_state[registry_key] = sorted(previous_locked)
+
+        st.session_state.pii_detection = {
+            "scope": inspection_scope,
+            "report": report,
+            "detected_mandatory": sorted(previous_locked),
+            "detected_suggested": detected_suggested,
+            "date_columns": date_columns,
+            "revision": uuid.uuid4().hex,
+        }
+
+        st.sidebar.success("Privacy inspection completed.")
+
+    except Exception as ex:
+        st.session_state.pii_detection = None
+        st.sidebar.error(f"Privacy inspection failed: {ex}")
+
+# ==========================================================
+# PRIVACY CONTROLS
+# ==========================================================
+
+detection = st.session_state.pii_detection
+draft_policy = None
+
+if detection is not None and detection["scope"] == inspection_scope:
+    mandatory, suggested = classify_columns(
+        columns=columns,
+        table_key=f"{schema_input}.{table_input}",
+        detected_mandatory=detection["detected_mandatory"],
+        detected_suggested=detection["detected_suggested"],
+        date_columns=detection["date_columns"],
+    )
+
+    optional_choices = [column for column in columns if column not in mandatory and normalize_column(column) != "brand__c"]
+    widget_key = f"privacy_optional_{detection['revision']}"
+
+    if widget_key not in st.session_state:
+        applied = st.session_state.applied_privacy_policy
+
+        if applied is not None and applied.dataset_id == current_dataset_id:
+            defaults = set(applied.optional_columns) | set(suggested)
+        else:
+            defaults = set(suggested)
+
+        st.session_state[widget_key] = [
+            column for column in optional_choices if column in defaults
+        ]
+
+    with st.sidebar.expander("🔒 Privacy Controls", expanded=True):
+        st.caption(f"Mandatory exclusions: {len(mandatory)} — locked")
+
+        if mandatory:
+            with st.expander("View mandatory columns"):
+                st.write(mandatory)
+
+        optional_exclusions = st.multiselect(
+            "Additional columns to exclude",
+            options=optional_choices,
+            key=widget_key,
+            help=(
+                "Review candidates are selected initially. "
+                "Mandatory columns cannot be restored through this control."
+            ),
+        )
+
+        with st.expander("Detection report — no raw values"):
+            st.dataframe(
+                detection["report"],
+                width="stretch",
+                hide_index=True,
+            )
+
+        st.caption(
+            "Date columns are not automatically excluded. "
+            "No evidence in 100 rows does not mean a column is PII-free."
+        )
+
+        try:
+            draft_policy = build_policy(
+                columns=columns,
+                table_key=f"{schema_input}.{table_input}",
+                dataset_id=current_dataset_id,
+                optional_exclusions=optional_exclusions,
+                detected_mandatory=detection["detected_mandatory"],
+                detected_suggested=detection["detected_suggested"],
+                date_columns=detection["date_columns"],
+            )
+
+            st.caption(
+                f"Approved: {len(draft_policy.approved_columns)} | "
+                f"Excluded: {len(draft_policy.blocked_names)}"
+            )
+
+            applied = st.session_state.applied_privacy_policy
+
+            if (
+                applied is not None
+                and applied.dataset_id == draft_policy.dataset_id
+                and applied.fingerprint != draft_policy.fingerprint
+            ):
+                st.warning(
+                    "Privacy settings changed. Apply them to replace the loaded data."
+                )
+
+        except ValueError as ex:
+            st.warning(str(ex))
+
+# ==========================================================
+# APPLY POLICY AND LOAD APPROVED DATA
+# ==========================================================
+
+can_load = can_inspect and draft_policy is not None
+
+if st.sidebar.button(
+    "Apply Privacy & Load Dataset",
+    disabled=not can_load,
+):
+    try:
+        if draft_policy is None:
+            raise ValueError("Inspect privacy and review exclusions first.")
+
+        with st.spinner("Loading approved columns..."):
             metadata_df, sample_df, row_count = load_table_metadata(
                 schema_name=schema_input,
                 table_name=table_input,
                 brand_name=brand,
+                policy=draft_policy,
             )
 
-        previous_scope = (
-            st.session_state.schema_name,
-            st.session_state.table_name,
-            st.session_state.loaded_brand,
-        )
-        new_scope = (schema_input, table_input, brand)
-
-        if previous_scope != new_scope:
-            clear_chat()
+        # Always clear previous outputs when applying a privacy policy.
+        clear_chat()
 
         st.session_state.metadata_df = metadata_df
         st.session_state.sample_df = sample_df
@@ -502,16 +787,24 @@ if st.sidebar.button("Load Dataset", disabled=not can_load):
         st.session_state.schema_name = schema_input
         st.session_state.table_name = table_input
         st.session_state.loaded_brand = brand
+        st.session_state.applied_privacy_policy = draft_policy
 
-        # Invalidate analysis only after a successful dataset load.
+        st.session_state.full_data_loaded = False
+        st.session_state.full_load_message = None
+
         st.session_state.dataset_version = uuid.uuid4().hex
         st.session_state.analysis_result = None
         st.session_state.analysis_version = None
 
-        st.sidebar.success(f"Loaded: {brand}")
-
+        st.sidebar.success(f"Loaded approved data for: {brand}")
+        
     except Exception as ex:
         st.sidebar.error(f"Dataset loading failed: {ex}")
+
+
+# ==========================================================
+# LOADED SCOPE AND CHAT RESET
+# ==========================================================
 
 if st.session_state.loaded_brand:
     st.sidebar.caption(f"Loaded brand: {st.session_state.loaded_brand}")
@@ -520,21 +813,20 @@ if st.session_state.loaded_brand:
         input_scope
         != (st.session_state.schema_name, st.session_state.table_name)
         or (
-            st.session_state.selected_brand is not None
-            and st.session_state.selected_brand != st.session_state.loaded_brand
+            brand is not None
+            and brand != st.session_state.loaded_brand
         )
     )
 
     if selection_changed:
         st.sidebar.warning(
             "The selection differs from the loaded dataset. "
-            "Existing pages still use the loaded dataset."
+            "Existing pages still use the previously applied dataset."
         )
 
 if st.sidebar.button("Clear Chat"):
     clear_chat()
     st.rerun()
-
 
 # ==========================================================
 # LOADED DATA VALIDATION
@@ -557,11 +849,22 @@ metadata_df = st.session_state.metadata_df
 if not isinstance(metadata_df, pd.DataFrame):
     metadata_df = pd.DataFrame()
 
-st.caption(
-    f"Loaded scope: {st.session_state.schema_name}."
-    f"{st.session_state.table_name} | Brand: {st.session_state.loaded_brand}"
-)
+# st.caption(
+#     f"Loaded scope: {st.session_state.schema_name}."
+#     f"{st.session_state.table_name} | Brand: {st.session_state.loaded_brand}"
+# )
 
+# if st.session_state.sample_df is not None:
+#     st.info(
+#         f"{len(st.session_state.sample_df):,} rows currently loaded "
+#         f"for {st.session_state.loaded_brand}"
+#     )
+
+st.caption(
+    f"Loaded Rows: {len(st.session_state.sample_df):,} | "
+    f"Total Rows: {st.session_state.row_count:,} | "
+    f"Brand: {st.session_state.loaded_brand}"
+)
 
 # ==========================================================
 # DATA OVERVIEW
@@ -583,10 +886,16 @@ if menu == "Data Overview":
     )
     c4.metric("Categorical Columns", categorical_count)
 
-    st.caption(
-        f"Profiling and local analysis use LIMIT of {len(df):,} rows. "
-        "not a guaranteed representative sample."
+    mode = (
+        "Full Dataset"
+        if st.session_state.full_data_loaded
+        else "Sample Dataset"
     )
+
+    st.caption(
+        f"{mode}: {len(df):,} rows loaded."
+    )
+
 
     st.subheader("Metadata")
     st.dataframe(metadata_df, width="stretch", hide_index=True)
@@ -603,10 +912,13 @@ elif menu == "Data Analysis":
     st.title("📈 Data Analysis")
     st.caption("Local statistics are based on the loaded sample.")
 
-    if st.button("Refresh Analysis"):
-        st.session_state.analysis_result = None
-        st.session_state.analysis_version = None
+    render_full_data_controls(
+        load_dataset=load_table_metadata,
+        clear_chat=clear_chat,
+    )
 
+    df = st.session_state.sample_df
+    
     needs_analysis = (
         st.session_state.analysis_result is None
         or st.session_state.analysis_version != st.session_state.dataset_version

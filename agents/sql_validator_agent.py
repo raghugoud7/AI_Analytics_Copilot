@@ -3,11 +3,15 @@
 import sqlglot
 from sqlglot import exp
 from sqlglot.optimizer.scope import traverse_scope
-
+from utils.privacy_policy import PrivacyPolicy, normalize_column
 from config.privacy import SENSITIVE_COLUMNS
 
 
 class SQLValidatorAgent:
+    
+    def __init__(self, privacy_policy: PrivacyPolicy | None = None):
+        self.privacy_policy = privacy_policy
+        
     BLOCKED_NODES = {
         "alter",
         "command",
@@ -55,7 +59,9 @@ class SQLValidatorAgent:
         if not isinstance(tree, (exp.Select, exp.Union, exp.Intersect, exp.Except)):
             raise ValueError("Only read-only SELECT queries and CTEs are allowed.")
 
-        sensitive = {str(column).casefold() for column in SENSITIVE_COLUMNS}
+        sensitive = {normalize_column(column) for column in SENSITIVE_COLUMNS}
+        if self.privacy_policy is not None:
+            sensitive.update(self.privacy_policy.blocked_names)
 
         for node in tree.walk():
             if node.key.lower() in self.BLOCKED_NODES:
@@ -72,8 +78,10 @@ class SQLValidatorAgent:
                 raise ValueError("Recursive CTEs are not allowed.")
 
         for column in tree.find_all(exp.Column):
-            if column.name.casefold() in sensitive:
-                raise ValueError(f"Sensitive column not allowed: {column.name}")
+            if normalize_column(column.name) in sensitive:
+                raise ValueError(
+                    f"Column excluded by the privacy policy: {column.name}"
+                )
 
         for star in tree.find_all(exp.Star):
             # COUNT(*) is allowed; SELECT * and alias.* are not.
